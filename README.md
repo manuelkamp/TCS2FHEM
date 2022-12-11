@@ -24,4 +24,28 @@ api: API key (string)
 
 **Hint:** use `openssl rand -hex 20` to generate the api_key
 
+## Wiring of Display
+```
+OLED   =>    Pico  
+VCC    ->    VSYS  
+GND    ->    GND  
+DIN    ->    11  
+CLK    ->    10  
+CS     ->    9  
+DC     ->    8  
+RST    ->    12  
+SDA    ->    6  
+SCL    ->    7   
+```
 
+## Wiring of 4-Button Keypad
+todo
+
+## Power circuit
+todo
+
+## Networking
+Be sure that you give your Pico a static IP address on your router, so you know where the webservice is availabel and can set it up in FHEM.
+
+## FHEM API
+todo
