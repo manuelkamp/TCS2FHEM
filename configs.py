@@ -5,4 +5,5 @@ configs = {
     'auto_summertime': True,
     'disable_wifi_powersavingmode': True,
     'api_port': 80,
+    'hostname': 'tcs2fhem'
     }
