@@ -39,6 +39,7 @@ SCL    ->    7
 ```
 
 ## Wiring of 4-Button Keypad
+![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/4-key-pad-connector.png)
 todo
 
 ## Power circuit
