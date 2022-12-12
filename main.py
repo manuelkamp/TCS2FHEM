@@ -13,18 +13,41 @@ import ustruct as struct
 import framebuf
 import Oled
 import uasyncio as asyncio
+import uos as os
+from machine import Pin
 
 rp2.country(configs['country'])
 wlan = network.WLAN(network.STA_IF)
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 version = "0.1-alpha"
-addr = socket.getaddrinfo('0.0.0.0', configs['api_port'])[0][-1]
 led = machine.Pin('LED', machine.Pin.OUT)
 Oled = Oled.Oled()
+interrupt_flag = 0
+debounce_time = 0
+taste1 = Pin(18, Pin.IN, Pin.PULL_UP)
+taste2 = Pin(19, Pin.IN, Pin.PULL_UP)
+taste3 = Pin(20, Pin.IN, Pin.PULL_UP)
+taste4 = Pin(21, Pin.IN, Pin.PULL_UP)
+tasteA = taste1
+subscreen = 0
+sc = 0
+
+def callback(pin):
+    global interrupt_flag, debounce_time, tasteA
+    if (time.ticks_ms() - debounce_time) > 300:
+        interrupt_flag = 1
+        debounce_time = time.ticks_ms()
+        tasteA = pin
+
+taste1.irq(trigger=Pin.IRQ_FALLING, handler=callback)
+taste2.irq(trigger=Pin.IRQ_FALLING, handler=callback)
+taste3.irq(trigger=Pin.IRQ_FALLING, handler=callback)
+taste4.irq(trigger=Pin.IRQ_FALLING, handler=callback)
 
 # WLAN-Verbindung herstellen
 def wlanConnect():
     wlan.active(True)
+    #wlan.config(hostname=configs['hostname'])
     if(configs['disable_wifi_powersavingmode']):
         wlan.config(pm = 0xa11140)
     Log("mac = " + str(mac))
@@ -109,10 +132,11 @@ def ShowText(line1, line2, line3):
     Oled.text(line3,1,22,Oled.white)  
     Oled.show()
 
-# Loggt messages in log.txt
+# Loggt messages in täglichen Logfiles im Ordner logs
 def Log(message):
     print(message)
-    file = open("log.txt", "a")
+    dt = machine.RTC().datetime()
+    file = open("/logs/"+str(dt[0])+"-"+str(dt[1])+"-"+str(dt[2])+".txt", "a")
     file.write(DateTimeNow() + ";" + message + "\n")
     file.close()
 
@@ -131,6 +155,13 @@ def Uptime(boottime):
     now = time.time()
     return now-boottime
 
+# Löscht alle Logs die nicht von heute sind
+def HousekeepingLogs():
+    for file in os.listdir("/logs"):
+        if(file.endswith(".txt")):
+            print(file)
+            #todo delete files older than x days
+
 # API
 html = """<!DOCTYPE html>
 <html>
@@ -140,7 +171,7 @@ html = """<!DOCTYPE html>
     </body>
 </html>
 """
-async def serve_client(reader, writer):
+async def ServeApi(reader, writer):
     print("Client connected")
     request_line = await reader.readline()
     print("Request:", request_line)
@@ -173,17 +204,76 @@ async def serve_client(reader, writer):
     await writer.wait_closed()
     print("Client disconnected")
 
+# Bildschirmausgabe
 def BuildScreen():
-    #todo screen neu aufbauen
-    ShowText("TCS<->FHEM", DateTimeNow(), "Auf Lic Par Set")
+    global subscreen
+    if (subscreen == 0):
+        ShowText("TCS<->FHEM", DateTimeNow(), "Auf LiG PaM Chk")
+    elif (subscreen == 1):
+        ShowText("Door", "getriggert", "            Ext")
+    elif (subscreen == 2):
+        ShowText("Licht", "getriggert", "            Ext")
+    elif (subscreen == 3):
+        ShowText("Party-Mode", "enabled", "            Ext")
+    elif (subscreen == 4): #todo
+        ShowText("Hostname:", configs['hostname'], "Up  Dwn     Ext")
+    elif (subscreen == 5):
+        ShowText("MAC Addr:", ubinascii.hexlify(network.WLAN().config('mac'),':').decode(), "Up  Dwn     Ext")
+    elif (subscreen == 6): #todo
+        ShowText("IP Addr:", os.popen('hostname -I'.read().strip().split(" ")), "Up  Dwn     Ext")
+    elif (subscreen == 7):
+        ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
+    elif (subscreen == 8): #todo
+        ShowText("CPU Freq:", str(machine.freq) + " Hz", "Up  Dwn     Ext")
+    elif (subscreen == 9):
+        ShowText("Firmware:", version, "Up  Dwn     Ext")
+    else:
+        ShowText("Error","Invalid Screen", "            Ext")
+
+def ShowSystemCheck(screen):
+    #todo
+    global subscreen, sc
+    if (screen == "start"):
+        Log("Showing Systemcheck")
+        sc = 0
+    elif (screen == "next"):
+        print("next")
+        sc = sc + 1
+    else:
+        print("prev")
+        sc = sc - 1
+    if (sc > 5):
+        sc = 0
+    elif (sc < 0):
+        sc = 5
+    subscreen = sc + 4
+
+def TogglePartyMode():
+    #todo
+    global subscreen
+    subscreen = 3
+    Log("Toggling Party-Mode")
+    
+def TriggerLicht():
+    #todo
+    global subscreen
+    subscreen = 2
+    Log("Triggering Licht")
+    
+def TriggerDoor():
+    #todo
+    global subscreen
+    subscreen = 1
+    Log("Triggering Door")
 
 # Hauptroutine, die dauerhaft ausgeführt wird
 async def MainLoop():
+    global interrupt_flag, debounce_time, tasteA, subscreen
     Log("Entering MainLoop")
     boottime = time.time()
     ShowText("Booting [3/3]", "API Setup: key", secrets['api'])
     Log("Setting up API on port " + str(configs['api_port']) + " with key " + secrets['api'])
-    asyncio.create_task(asyncio.start_server(serve_client, "0.0.0.0", configs['api_port']))
+    asyncio.create_task(asyncio.start_server(ServeApi, "0.0.0.0", configs['api_port']))
     #SetUpApi()
     time.sleep(0.8)
     ShowText("TCS<->FHEM", "Firmware:", version)
@@ -194,11 +284,40 @@ async def MainLoop():
         time.sleep(0.5)
         #todo blink led as heartbeat
         BuildScreen()
+        if interrupt_flag is 1:
+            interrupt_flag = 0
+            if (subscreen == 0):
+                if (tasteA == taste1):
+                    ShowSystemCheck("start")
+                elif (tasteA == taste2):
+                    TogglePartyMode()
+                elif (tasteA == taste3):
+                    TriggerLicht()
+                elif (tasteA == taste4):
+                    TriggerDoor()
+                else:
+                    Log("Error: Invalid Button pressed!")
+            elif (subscreen == 1 or subscreen == 2 or subscreen == 3):
+                if (tasteA == taste1):
+                    subscreen = 0
+            elif (subscreen == 4 or subscreen == 5 or subscreen == 6 or subscreen == 7 or subscreen == 8 or subscreen == 9):
+                if (tasteA == taste1):
+                    subscreen = 0
+                elif (tasteA == taste3):
+                    ShowSystemCheck("next")
+                elif (tasteA == taste4):
+                    ShowSystemCheck("prev")
+                else:
+                    Log("Error: Invalid Button pressed!")
+            else:
+                if (tasteA == taste1):
+                    subscreen = 0
 
 #####################################################################
 
 # Booten des Device
 def Boot():
+    HousekeepingLogs()
     ShowText("Booting [1/3]", "Conn. Wifi:", secrets['ssid'] + "...")
     ShowText("Booting [1/3]", "Conn. Wifi: MAC", mac)
     wlanConnect()
