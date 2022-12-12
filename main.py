@@ -215,16 +215,16 @@ def BuildScreen():
         ShowText("Licht", "getriggert", "            Ext")
     elif (subscreen == 3):
         ShowText("Party-Mode", "enabled", "            Ext")
-    elif (subscreen == 4): #todo
+    elif (subscreen == 4):
         ShowText("Hostname:", configs['hostname'], "Up  Dwn     Ext")
     elif (subscreen == 5):
         ShowText("MAC Addr:", ubinascii.hexlify(network.WLAN().config('mac'),':').decode(), "Up  Dwn     Ext")
-    elif (subscreen == 6): #todo
-        ShowText("IP Addr:", os.popen('hostname -I'.read().strip().split(" ")), "Up  Dwn     Ext")
+    elif (subscreen == 6):
+        ShowText("IP Addr:", wlan.ifconfig()[0], "Up  Dwn     Ext")
     elif (subscreen == 7):
         ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
-    elif (subscreen == 8): #todo
-        ShowText("CPU Freq:", str(machine.freq) + " Hz", "Up  Dwn     Ext")
+    elif (subscreen == 8):
+        ShowText("CPU Freq:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
     elif (subscreen == 9):
         ShowText("Firmware:", version, "Up  Dwn     Ext")
     else:
@@ -237,10 +237,8 @@ def ShowSystemCheck(screen):
         Log("Showing Systemcheck")
         sc = 0
     elif (screen == "next"):
-        print("next")
         sc = sc + 1
     else:
-        print("prev")
         sc = sc - 1
     if (sc > 5):
         sc = 0
