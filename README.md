@@ -44,7 +44,8 @@ SCL    ->    7
 todo
 
 ## Power circuit
-todo
+The power circuit allows you to run the Pico W directly from the TCS bus system's power. The circuit files for KiCad are stored in the kicad folder of this repo.
+
 
 ## Networking
 Be sure that you give your Pico a static IP address on your router, so you know where the webservice is availabel and can set it up in FHEM.
