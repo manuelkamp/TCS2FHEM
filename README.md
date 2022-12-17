@@ -16,6 +16,7 @@ gmt_offset: offset to gmt for your timezone in hours (int)
 auto_summertime: Enables changing to summertime (and back) automatically (True/False)  
 disable_wifi_powersavingmode: Wifi powersavingmode is enabled per default. Set to true to disable powersavingmode for Wifi (True/False)  
 api_port: Port on which the API is available (int)  
+displayoff: Minutes after last action, display goes off automatically (int)
 
 In the file secrets.py set your configurations:  
 ssid: Wifi name (string)  
