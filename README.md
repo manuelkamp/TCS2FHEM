@@ -40,12 +40,12 @@ SCL    ->    7
 ```
 
 ## Wiring of 4-Button Keypad
-![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/4-key-pad-connector.png)
+![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/4-key-pad-connector.png)  
 todo
 
 ## Power circuit
-The power circuit allows you to run the Pico W directly from the TCS bus system's power. The circuit files for KiCad are stored in the kicad folder of this repo.
-
+The power circuit allows you to run the Pico W directly from the TCS bus system's power. It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad folder of this repo. You can order/print your own PCB with that files.  
+![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs.png)  
 
 ## Networking
 Be sure that you give your Pico a static IP address on your router, so you know where the webservice is availabel and can set it up in FHEM.
