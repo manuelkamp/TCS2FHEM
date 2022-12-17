@@ -22,6 +22,7 @@ mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 version = "0.1-alpha"
 led = machine.Pin('LED', machine.Pin.OUT)
 Oled = Oled.Oled()
+boottime = time.time()
 interrupt_flag = 0
 debounce_time = 0
 taste1 = Pin(18, Pin.IN, Pin.PULL_UP)
@@ -31,6 +32,9 @@ taste4 = Pin(21, Pin.IN, Pin.PULL_UP)
 tasteA = taste1
 subscreen = 0
 sc = 0
+partyMode = False
+lastActionTicks = 0
+displayOff = False
 
 def callback(pin):
     global interrupt_flag, debounce_time, tasteA
@@ -151,9 +155,11 @@ def Reboot():
     machine.reset()
 
 # Berechnet die Uptime in Sekunden
-def Uptime(boottime):
-    now = time.time()
-    return now-boottime
+def Uptime():
+    # todo Format Stunden:Minuten
+    global boottime
+    print(time.mktime(time.time() - boottime))
+    return 0
 
 # Löscht alle Logs die nicht von heute sind
 def HousekeepingLogs():
@@ -206,32 +212,42 @@ async def ServeApi(reader, writer):
 
 # Bildschirmausgabe
 def BuildScreen():
-    global subscreen
-    if (subscreen == 0):
-        ShowText("TCS<->FHEM", DateTimeNow(), "Auf LiG PaM Chk")
-    elif (subscreen == 1):
-        ShowText("Door", "getriggert", "            Ext")
-    elif (subscreen == 2):
-        ShowText("Licht", "getriggert", "            Ext")
-    elif (subscreen == 3):
-        ShowText("Party-Mode", "enabled", "            Ext")
-    elif (subscreen == 4):
-        ShowText("Hostname:", configs['hostname'], "Up  Dwn     Ext")
-    elif (subscreen == 5):
-        ShowText("MAC Addr:", ubinascii.hexlify(network.WLAN().config('mac'),':').decode(), "Up  Dwn     Ext")
-    elif (subscreen == 6):
-        ShowText("IP Addr:", wlan.ifconfig()[0], "Up  Dwn     Ext")
-    elif (subscreen == 7):
-        ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
-    elif (subscreen == 8):
-        ShowText("CPU Freq:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
-    elif (subscreen == 9):
-        ShowText("Firmware:", version, "Up  Dwn     Ext")
+    global subscreen, partyMode, lastActionTicks, displayOff
+    lastActionTicks += 1
+    # after 10 Seconds of no activity, go back to main screen
+    if (lastActionTicks >= 20):
+        subscreen = 0
+    # after 5 Minutes turn off the display
+    if (lastActionTicks >= 600):
+        displayOff = True
+        ShowText("","","")
     else:
-        ShowText("Error","Invalid Screen", "            Ext")
+        if (subscreen == 0):
+            ShowText("TCS<->FHEM", DateTimeNow(), "Auf LiG PaM Chk")
+        elif (subscreen == 1):
+            ShowText("Door", "getriggert", "            Ext")
+        elif (subscreen == 2):
+            ShowText("Licht", "getriggert", "            Ext")
+        elif (subscreen == 3):
+            ShowText("Party-Mode", ("enabled" if partyMode else "disabled"), "            Ext")
+        elif (subscreen == 4):
+            ShowText("Hostname:", configs['hostname'], "Up  Dwn     Ext")
+        elif (subscreen == 5):
+            ShowText("MAC Addr:", ubinascii.hexlify(network.WLAN().config('mac'),':').decode(), "Up  Dwn     Ext")
+        elif (subscreen == 6):
+            ShowText("IP Addr:", wlan.ifconfig()[0], "Up  Dwn     Ext")
+        elif (subscreen == 7):
+            ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
+        elif (subscreen == 8):
+            ShowText("CPU Freq:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
+        elif (subscreen == 9):
+            ShowText("Firmware:", version, "Up  Dwn     Ext")
+        elif (subscreen == 10):
+            ShowText("Uptime:", Uptime(), "Up  Dwn     Ext")
+        else:
+            ShowText("Error","Invalid Screen", "            Ext")
 
 def ShowSystemCheck(screen):
-    #todo
     global subscreen, sc
     if (screen == "start"):
         Log("Showing Systemcheck")
@@ -240,17 +256,21 @@ def ShowSystemCheck(screen):
         sc = sc + 1
     else:
         sc = sc - 1
-    if (sc > 5):
+    if (sc > 6):
         sc = 0
     elif (sc < 0):
-        sc = 5
+        sc = 6
     subscreen = sc + 4
 
 def TogglePartyMode():
-    #todo
-    global subscreen
+    global subscreen, partyMode
+    if (partyMode):
+        partyMode = False
+        Log("Party-Mode off")
+    else:
+        partyMode = True
+        Log("Party-Mode on")
     subscreen = 3
-    Log("Toggling Party-Mode")
     
 def TriggerLicht():
     #todo
@@ -266,50 +286,50 @@ def TriggerDoor():
 
 # Hauptroutine, die dauerhaft ausgeführt wird
 async def MainLoop():
-    global interrupt_flag, debounce_time, tasteA, subscreen
+    global interrupt_flag, debounce_time, tasteA, subscreen, boottime, lastActionTicks, displayOff
     Log("Entering MainLoop")
     boottime = time.time()
     ShowText("Booting [3/3]", "API Setup: key", secrets['api'])
     Log("Setting up API on port " + str(configs['api_port']) + " with key " + secrets['api'])
     asyncio.create_task(asyncio.start_server(ServeApi, "0.0.0.0", configs['api_port']))
-    #SetUpApi()
-    time.sleep(0.8)
     ShowText("TCS<->FHEM", "Firmware:", version)
     Log("Booting complete with Firmware " + version)
-    time.sleep(0.8)
     while True:
-        #print(Uptime(boottime))
         time.sleep(0.5)
-        #todo blink led as heartbeat
         BuildScreen()
         if interrupt_flag is 1:
             interrupt_flag = 0
-            if (subscreen == 0):
-                if (tasteA == taste1):
-                    ShowSystemCheck("start")
-                elif (tasteA == taste2):
-                    TogglePartyMode()
-                elif (tasteA == taste3):
-                    TriggerLicht()
-                elif (tasteA == taste4):
-                    TriggerDoor()
-                else:
-                    Log("Error: Invalid Button pressed!")
-            elif (subscreen == 1 or subscreen == 2 or subscreen == 3):
-                if (tasteA == taste1):
-                    subscreen = 0
-            elif (subscreen == 4 or subscreen == 5 or subscreen == 6 or subscreen == 7 or subscreen == 8 or subscreen == 9):
-                if (tasteA == taste1):
-                    subscreen = 0
-                elif (tasteA == taste3):
-                    ShowSystemCheck("next")
-                elif (tasteA == taste4):
-                    ShowSystemCheck("prev")
-                else:
-                    Log("Error: Invalid Button pressed!")
+            lastActionTicks = 0
+            if (displayOff):
+                displayOff = False
             else:
-                if (tasteA == taste1):
-                    subscreen = 0
+                interrupt_flag = 0
+                if (subscreen == 0):
+                    if (tasteA == taste1):
+                        ShowSystemCheck("start")
+                    elif (tasteA == taste2):
+                        TogglePartyMode()
+                    elif (tasteA == taste3):
+                        TriggerLicht()
+                    elif (tasteA == taste4):
+                        TriggerDoor()
+                    else:
+                        Log("Error: Invalid Button pressed!")
+                elif (subscreen == 1 or subscreen == 2 or subscreen == 3):
+                    if (tasteA == taste1):
+                        subscreen = 0
+                elif (subscreen == 4 or subscreen == 5 or subscreen == 6 or subscreen == 7 or subscreen == 8 or subscreen == 9 or subscreen == 10):
+                    if (tasteA == taste1):
+                        subscreen = 0
+                    elif (tasteA == taste3):
+                        ShowSystemCheck("next")
+                    elif (tasteA == taste4):
+                        ShowSystemCheck("prev")
+                    else:
+                        Log("Error: Invalid Button pressed!")
+                else:
+                    if (tasteA == taste1):
+                        subscreen = 0
 
 #####################################################################
 
@@ -321,11 +341,9 @@ def Boot():
     wlanConnect()
     if (wlanStatus()):
         ShowText("Booting [1/3]", "Conn. Wifi: IP", wlan.ifconfig()[0])
-        time.sleep(0.8)
         ShowText("Booting [2/3]", "NTP time:", configs['ntp_host'])
         setRTCTimeNTP()
         ShowText("Booting [2/3]", "NTP time:", DateTimeNow())
-        time.sleep(0.8)
         try:
             asyncio.run(MainLoop())
         finally:
