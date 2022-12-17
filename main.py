@@ -19,7 +19,7 @@ from machine import Pin
 rp2.country(configs['country'])
 wlan = network.WLAN(network.STA_IF)
 mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
-version = "0.1-alpha"
+version = "0.2-alpha"
 led = machine.Pin('LED', machine.Pin.OUT)
 Oled = Oled.Oled()
 boottime = time.time()
