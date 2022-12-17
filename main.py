@@ -147,7 +147,7 @@ def Log(message):
 # Funktion, die das aktuelle Datum und Uhrzeit zurück gibt
 def DateTimeNow():
     tm = time.gmtime()
-    return str(tm[2])+"."+str(tm[1])+"."+str(tm[0])+","+str(tm[3])+":"+str(tm[4])#
+    return "%02d.%02d.%04d,%02d:%02d" % (tm[2], tm[1], tm[0], tm[3], tm[4])
 
 # Führt einen Reboot des Pico aus (z.B. im Fehlerfall)
 def Reboot():
@@ -156,10 +156,13 @@ def Reboot():
 
 # Berechnet die Uptime in Sekunden
 def Uptime():
-    # todo Format Stunden:Minuten
     global boottime
-    print(time.mktime(time.time() - boottime))
-    return 0
+    seconds = (time.time() - boottime) % (24 * 3600)
+    hours = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    return "%d:%02d" % (hours, minutes)
 
 # Löscht alle Logs die nicht von heute sind
 def HousekeepingLogs():
@@ -218,32 +221,32 @@ def BuildScreen():
     if (lastActionTicks >= 20):
         subscreen = 0
     # after 5 Minutes turn off the display
-    if (lastActionTicks >= 600):
+    if (lastActionTicks >= (configs['displayoff'] * 60 * 2)):
         displayOff = True
         ShowText("","","")
     else:
         if (subscreen == 0):
             ShowText("TCS<->FHEM", DateTimeNow(), "Auf LiG PaM Chk")
         elif (subscreen == 1):
-            ShowText("Door", "getriggert", "            Ext")
+            ShowText("Eingangstuer", "getriggert", "            Ext")
         elif (subscreen == 2):
-            ShowText("Licht", "getriggert", "            Ext")
+            ShowText("Licht im Gang", "getriggert", "            Ext")
         elif (subscreen == 3):
             ShowText("Party-Mode", ("enabled" if partyMode else "disabled"), "            Ext")
         elif (subscreen == 4):
             ShowText("Hostname:", configs['hostname'], "Up  Dwn     Ext")
         elif (subscreen == 5):
-            ShowText("MAC Addr:", ubinascii.hexlify(network.WLAN().config('mac'),':').decode(), "Up  Dwn     Ext")
+            ShowText("MAC Address:", ubinascii.hexlify(network.WLAN().config('mac'),':').decode(), "Up  Dwn     Ext")
         elif (subscreen == 6):
-            ShowText("IP Addr:", wlan.ifconfig()[0], "Up  Dwn     Ext")
+            ShowText("IP Address:", wlan.ifconfig()[0], "Up  Dwn     Ext")
         elif (subscreen == 7):
             ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
         elif (subscreen == 8):
-            ShowText("CPU Freq:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
+            ShowText("CPU Frequency:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
         elif (subscreen == 9):
-            ShowText("Firmware:", version, "Up  Dwn     Ext")
+            ShowText("Firmware version:", version, "Up  Dwn     Ext")
         elif (subscreen == 10):
-            ShowText("Uptime:", Uptime(), "Up  Dwn     Ext")
+            ShowText("Uptime (H:m):", Uptime(), "Up  Dwn     Ext")
         else:
             ShowText("Error","Invalid Screen", "            Ext")
 
