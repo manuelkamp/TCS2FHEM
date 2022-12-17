@@ -232,7 +232,7 @@ def BuildScreen():
         elif (subscreen == 2):
             ShowText("Licht im Gang", "getriggert", "            Ext")
         elif (subscreen == 3):
-            ShowText("Party-Mode", ("enabled" if partyMode else "disabled"), "            Ext")
+            ShowText("Party-Mode", ("aktiviert" if partyMode else "deaktiviert"), "            Ext")
         elif (subscreen == 4):
             ShowText("Hostname:", configs['hostname'], "Up  Dwn     Ext")
         elif (subscreen == 5):
@@ -244,9 +244,11 @@ def BuildScreen():
         elif (subscreen == 8):
             ShowText("CPU Frequency:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
         elif (subscreen == 9):
-            ShowText("Firmware version:", version, "Up  Dwn     Ext")
+            ShowText("Firmware vers.:", version, "Up  Dwn     Ext")
         elif (subscreen == 10):
             ShowText("Uptime (H:m):", Uptime(), "Up  Dwn     Ext")
+        elif (subscreen == 11):
+            ShowText("Perform", "reboot now", "Up  Dwn OK  Ext")
         else:
             ShowText("Error","Invalid Screen", "            Ext")
 
@@ -259,10 +261,10 @@ def ShowSystemCheck(screen):
         sc = sc + 1
     else:
         sc = sc - 1
-    if (sc > 6):
+    if (sc > 7):
         sc = 0
     elif (sc < 0):
-        sc = 6
+        sc = 7
     subscreen = sc + 4
 
 def TogglePartyMode():
@@ -321,9 +323,11 @@ async def MainLoop():
                 elif (subscreen == 1 or subscreen == 2 or subscreen == 3):
                     if (tasteA == taste1):
                         subscreen = 0
-                elif (subscreen == 4 or subscreen == 5 or subscreen == 6 or subscreen == 7 or subscreen == 8 or subscreen == 9 or subscreen == 10):
+                elif (subscreen == 4 or subscreen == 5 or subscreen == 6 or subscreen == 7 or subscreen == 8 or subscreen == 9 or subscreen == 10 or subscreen == 11):
                     if (tasteA == taste1):
                         subscreen = 0
+                    elif (subscreen == 11 and tasteA == taste2):
+                        Reboot()
                     elif (tasteA == taste3):
                         ShowSystemCheck("next")
                     elif (tasteA == taste4):
