@@ -3,9 +3,9 @@
 If you have a TCS door intercom system and want to integrate it into your FHEM instance, this is a project for you. The goal of this project is to have a device, that connects the TCS intercom to FHEM. It should allow to trigger the dooropener and other functions (such as switching on the light) in FHEM. Also it should send events (like someone ringed the bell at the front door, or someone ringed the bell at the main door) to FHEM, so you can automate it (send notifications, interact...)  
 
 ## Hardware  
-* Raspberry Pico W  
-* Waveshare 2,23" OLED Display  
-* 4-Button Keypad  
+* [Raspberry Pico W](https://mk0.at/pico-w)  
+* [Waveshare 2,23" OLED Display](https://mk0.at/waveshare-oled)  
+* [4-Button Keypad](https://mk0.at/4-keypad)  
 * 3D-printed Custom Case for Pico and Button Keypad and power circuit
 
 ## Instructions/Setup
