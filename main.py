@@ -7,6 +7,7 @@ import NTP
 import uasyncio as asyncio
 import utime as time
 import Keypad
+import usocket as socket
 
 from secrets import secrets
 from configs import configs
@@ -27,6 +28,7 @@ subscreen = 0
 sc = 0
 partyMode = False
 displayOff = False
+busline = machine.ADC(28)
 
 # Führt einen Reboot des Pico aus (z.B. im Fehlerfall)
 def Reboot():
@@ -139,18 +141,28 @@ def TriggerDoor():
     subscreen = 1
     Logger.LogMessage("Triggering Door")
 
+# Open a socket
+def OpenSocket():
+    address = (Networking.GetIPAddress(), configs['api_port'])
+    connection = socket.socket()
+    connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    connection.bind(address)
+    connection.listen(1)
+    connection.setblocking(False)
+    return connection
+
 #####################################################################
 
 def set_global_exception():
     def handle_exception(loop, context):
-        import sys
-        sys.print_exception(context["exception"])
-        sys.exit()
+        Logger.LogMessage("Fatal error: " + str(context["exception"]))
+        #Reboot()
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
 async def UiHandling():
     global interrupt_flag, lastActionTicks, displayOff, subscreen
+    Logger.LogMessage("UI handling started")
     while True:
         BuildScreen()
         if Keypad.interrupt_flag is 1:
@@ -190,19 +202,31 @@ async def UiHandling():
                         subscreen = 0
         await asyncio.sleep(0.5)
 
-async def APIHandling():
+html = """<!DOCTYPE html>
+<html>
+    <head> <title>TCS<->FHEM</title> </head>
+    <body> <h1>TCS<->FHEM</h1>
+        <p>%s</p>
+    </body>
+</html>
+"""
+async def APIHandling(connection):
     #todo
+    Logger.LogMessage("API started")
     while True:
-        v = 3
         print("api")
-        await asyncio.sleep(1)
+        
+        await asyncio.sleep(0.5)
 
 async def TCSBusReader():
-    #todo
+    global busline
+    Logger.LogMessage("TCS Busreader started")
+    reading = busline.read_u16()
     while True:
-        m = 5
-        print("tcs")
-        await asyncio.sleep(5)
+        #todo
+        i = 2
+        #print("tcs")
+        await asyncio.sleep(0.5)
 
 async def Main():
     set_global_exception()
@@ -211,8 +235,8 @@ async def Main():
     loop = asyncio.get_event_loop()
     ShowText("Booting [3/3]", "API Setup: key", secrets['api'])
     Logger.LogMessage("Setting up API on port " + str(configs['api_port']) + " with key " + secrets['api'])
-    loop.create_task(APIHandling())
-    #todo
+    #con = OpenSocket()
+    loop.create_task(APIHandling(OpenSocket()))
     ShowText("TCS<->FHEM", "Firmware:", version)
     Logger.LogMessage("Booting complete with Firmware " + version)
     loop.create_task(UiHandling())
