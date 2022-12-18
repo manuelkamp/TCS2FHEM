@@ -92,6 +92,7 @@ def BuildScreen():
         else:
             ShowText("Error","Invalid Screen", "            Ext")
 
+# Helfermethode für Systemcheck-Anzeige
 def ShowSystemCheck(screen):
     global subscreen, sc
     if (screen == "start"):
@@ -107,6 +108,7 @@ def ShowSystemCheck(screen):
         sc = 7
     subscreen = sc + 4
 
+# Aktiviert/Deaktiviert den Party-Mode
 def TogglePartyMode():
     global subscreen, partyMode
     if (partyMode):
@@ -117,24 +119,28 @@ def TogglePartyMode():
         Logger.LogMessage("Party-Mode on")
     subscreen = 3
 
+# Setzt den Party-Mode auf Aktiv/Inaktiv
 def SetPartyMode(newValue):
     global partyMode
     partyMode = newValue
     Logger.LogMessage("Setting Party-Mode via API to " + PartyModeState())
 
+# Gibt den Status des Party-Mode zurück
 def PartyModeState():
     global partyMode
     if (partyMode):
         return "enabled"
     else:
         return "disabled"
-    
+
+# Triggert das Licht am Gang
 def TriggerLicht():
     #todo
     global subscreen
     subscreen = 2
     Logger.LogMessage("Triggering Licht")
-    
+
+# Triggert den Türöffner
 def TriggerDoor():
     #todo
     global subscreen
@@ -143,6 +149,7 @@ def TriggerDoor():
 
 #####################################################################
 
+# Helfer-Methode, um Fehler auch in asyncio ausgeben zu können
 def set_global_exception():
     def handle_exception(loop, context):
         Logger.LogMessage("Fatal error: " + str(context["exception"]))
@@ -153,6 +160,7 @@ def set_global_exception():
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
+# Haupt-Methode für das ganze UI-Handling
 async def UiHandling():
     global interrupt_flag, lastActionTicks, displayOff, subscreen
     Logger.LogMessage("UI handling started")
@@ -195,6 +203,7 @@ async def UiHandling():
                         subscreen = 0
         await asyncio.sleep(0.5)
 
+# Hauptmethode für die API
 html = """<!DOCTYPE html>
 <html>
     <head> <title>TCS<->FHEM</title> </head>
@@ -253,6 +262,7 @@ async def APIHandling(reader, writer):
     await writer.drain()
     await writer.wait_closed()
 
+# Hauptmethode für den TCS Bus Reader
 async def TCSBusReader():
     global busline
     Logger.LogMessage("TCS Busreader started")
@@ -267,6 +277,7 @@ async def TCSBusReader():
         #if any other message and log_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
         await asyncio.sleep(0.5)
 
+# Hauptroutine
 async def Main():
     set_global_exception()
     Logger.LogMessage("Entering MainLoop")
