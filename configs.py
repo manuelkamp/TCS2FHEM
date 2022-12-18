@@ -7,4 +7,5 @@ configs = {
     'api_port': 80,
     'hostname': 'tcs2fhem',
     'displayoff': 5,
+    'log_incoming_bus_messages': True,
     }
