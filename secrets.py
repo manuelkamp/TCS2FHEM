@@ -1,5 +1,5 @@
 secrets = {
-    'ssid': 'kmpr.at',
-    'pw': 'kamper2760',
+    'ssid': 'wifiname',
+    'pw': 'wifipassword',
     'api': 'test',
     }
