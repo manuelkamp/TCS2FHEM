@@ -145,11 +145,11 @@ def TriggerDoor():
 
 def set_global_exception():
     def handle_exception(loop, context):
-        #Logger.LogMessage("Fatal error: " + str(context["exception"]))
-        import sys
-        sys.print_exception(context["exception"])
-        sys.exit()
-        #Reboot()
+        Logger.LogMessage("Fatal error: " + str(context["exception"]))
+        #import sys
+        #sys.print_exception(context["exception"])
+        #sys.exit()
+        Reboot()
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
