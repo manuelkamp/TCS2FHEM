@@ -1,4 +1,4 @@
-# TCS2FHEM
+# TCS2FHEM  !!!WORK IN PROGRESS!!!
 
 If you have a TCS door intercom system and want to integrate it into your FHEM instance, this is a project for you. The goal of this project is to have a device, that connects the TCS intercom to FHEM. It should allow to trigger the dooropener and other functions (such as switching on the light) in FHEM. Also it should send events (like someone ringed the bell at the front door, or someone ringed the bell at the main door) to FHEM, so you can automate it (send notifications, interact...)  
 
