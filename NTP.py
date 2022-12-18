@@ -1,5 +1,7 @@
 import utime as time
 import socket
+import ustruct as struct
+import machine
 
 class NTP():
     def __init__(self, Logger):
