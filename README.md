@@ -19,7 +19,10 @@ api_port: Port on which the API is available (int)
 displayoff: Minutes after last action, display goes off automatically (int)  
 log_incoming_bus_messages: Logs the hex value of every incoming bus message, which is useful to find out relevant messages (bool)  
 log_housekeeping_days: Logfiles older than this value in days get deleted by housekeeping (int)  
-
+frontdoor_ringing_message: The TCS Bus message if someone rings the front door (hex)  
+door_ringing_message: The TCS Bus message if someone rings the door (hex)  
+door_trigger_message: The TCS Bus message to trigger the front door opener (hex)  
+light_trigger_message: The TCS Bus message to trigger the light (hex)  
 
 In the file secrets.py set your configurations:  
 ssid: Wifi name (string)  
@@ -51,6 +54,11 @@ The power circuit allows you to run the Pico W directly from the TCS bus system'
 
 ## Networking
 Be sure that you give your Pico a static IP address on your router, so you know where the webservice is availabel and can set it up in FHEM.
+
+## TCS2FHEM API
+You can configure the port, on which the API runs in configs.py in the 'api_port'-value. You also have to set an API-Key in secrets.py in the 'api'-value. Then you can call the API as follows:  
+http://servername/api_key/command[/json]  
+
 
 ## FHEM API
 todo
