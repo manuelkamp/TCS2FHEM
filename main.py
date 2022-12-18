@@ -274,7 +274,7 @@ async def TCSBusReader():
         #if doorbell ringing is recognized, trigger external api
         #if frontdoorbell ringing is recognized, trigger external api
         #if frontdoorbell ringing is recognized and party-mode enabled, wait a short time and trigger DoorOpener and Licht
-        #if any other message and log_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
+        #if any other message and log_incoming_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
         await asyncio.sleep(0.5)
 
 # Hauptroutine

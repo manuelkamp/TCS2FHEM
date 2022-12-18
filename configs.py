@@ -9,4 +9,8 @@ configs = {
     'displayoff': 5,
     'log_incoming_bus_messages': True,
     'log_housekeeping_days': 7,
+    'frontdoor_ringing_message': 'abc',
+    'door_ringing_message': 'cdf',
+    'door_trigger_message': 'aaa',
+    'light_trigger_message': 'bbb',
     }
