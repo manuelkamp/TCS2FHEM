@@ -8,4 +8,5 @@ configs = {
     'hostname': 'tcs2fhem',
     'displayoff': 5,
     'log_incoming_bus_messages': True,
+    'log_housekeeping_days': 7,
     }
