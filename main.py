@@ -141,21 +141,14 @@ def TriggerDoor():
     subscreen = 1
     Logger.LogMessage("Triggering Door")
 
-# Open a socket
-def OpenSocket():
-    address = (Networking.GetIPAddress(), configs['api_port'])
-    connection = socket.socket()
-    connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    connection.bind(address)
-    connection.listen(1)
-    connection.setblocking(False)
-    return connection
-
 #####################################################################
 
 def set_global_exception():
     def handle_exception(loop, context):
-        Logger.LogMessage("Fatal error: " + str(context["exception"]))
+        #Logger.LogMessage("Fatal error: " + str(context["exception"]))
+        import sys
+        sys.print_exception(context["exception"])
+        sys.exit()
         #Reboot()
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
@@ -208,15 +201,57 @@ html = """<!DOCTYPE html>
     <body> <h1>TCS<->FHEM</h1>
         <p>%s</p>
     </body>
-</html>
-"""
-async def APIHandling(connection):
-    #todo
-    Logger.LogMessage("API started")
-    while True:
-        print("api")
-        
-        await asyncio.sleep(0.5)
+</html>"""
+json = """{ "TCS<->FHEM API":"%s" }"""
+async def APIHandling(reader, writer):
+    request_line = await reader.readline()
+    # We are not interested in HTTP request headers, skip them
+    while await reader.readline() != b"\r\n":
+        pass
+    request = str(request_line)
+    try:
+        request = request.split()[1]
+    except IndexError:
+        pass
+    Logger.LogMessage("API request: " + request)
+    req = request.split('/')
+    stateis = ""
+    if (len(req) == 3 or len(req) == 4):
+        if (req[1] == secrets['api']):
+            if (req[2] == "triggerdoor"):
+                TriggerDoor()
+                stateis = "Triggered front door opener"
+            elif (req[2] == "triggerlight"):
+                TriggerLicht()
+                stateis = "Triggered light"
+            elif (req[2] == "togglepartymode"):
+                TogglePartyMode()
+                stateis = "Toggled Party-Mode"
+            elif (req[2] == "partymodeon"):
+                SetPartyMode(True)
+                stateis = "Enabled Party-Mode"
+            elif (req[2] == "partymodeoff"):
+                SetPartyMode(False)
+                stateis = "Disabled Party-Mode"
+            elif (req[2] == "partymodestate"):
+                stateis = "Party-Mode is " + PartyModeState()
+            else:
+                stateis = "Error: Unknown command!"
+        else:
+            stateis = "<b>Error:</b> API key is invalid!"
+        if (len(req) == 4 and req[3] == "json"):
+            response = json % stateis
+            writer.write('HTTP/1.0 200 OK\r\nContent-type: text/json\r\n\r\n')
+        else:
+            response = html % stateis
+            writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
+    else:
+        stateis = "<b>Error:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
+        response = html % stateis
+        writer.write('HTTP/1.0 500 Server Error\r\nContent-type: text/html\r\n\r\n')
+    writer.write(response)
+    await writer.drain()
+    await writer.wait_closed()
 
 async def TCSBusReader():
     global busline
@@ -226,6 +261,10 @@ async def TCSBusReader():
         #todo
         i = 2
         #print("tcs")
+        #if doorbell ringing is recognized, trigger external api
+        #if frontdoorbell ringing is recognized, trigger external api
+        #if frontdoorbell ringing is recognized and party-mode enabled, wait a short time and trigger DoorOpener and Licht
+        #if any other message and log_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
         await asyncio.sleep(0.5)
 
 async def Main():
@@ -235,8 +274,8 @@ async def Main():
     loop = asyncio.get_event_loop()
     ShowText("Booting [3/3]", "API Setup: key", secrets['api'])
     Logger.LogMessage("Setting up API on port " + str(configs['api_port']) + " with key " + secrets['api'])
-    #con = OpenSocket()
-    loop.create_task(APIHandling(OpenSocket()))
+    loop.create_task(asyncio.start_server(APIHandling, Networking.GetIPAddress(), configs['api_port']))
+    Logger.LogMessage("API started")
     ShowText("TCS<->FHEM", "Firmware:", version)
     Logger.LogMessage("Booting complete with Firmware " + version)
     loop.create_task(UiHandling())
@@ -264,6 +303,3 @@ try:
     asyncio.run(Main())
 finally:
     asyncio.new_event_loop()
-
-#test things down here
-Logger.LogMessage("Ende erreicht")
