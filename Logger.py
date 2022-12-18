@@ -3,8 +3,8 @@ import utime as time
 import uos as os
 
 class Logger():
-    def __init__(self):
-        pass
+    def __init__(self, hk_days):
+        self.hk_days = hk_days
 
     def LogMessage(self, message):
         print(message)
