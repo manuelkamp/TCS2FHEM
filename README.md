@@ -59,6 +59,13 @@ Be sure that you give your Pico a static IP address on your router, so you know 
 You can configure the port, on which the API runs in configs.py in the 'api_port'-value. You also have to set an API-Key in secrets.py in the 'api'-value. Then you can call the API as follows:  
 http://servername/api_key/command[/json]  
 
+You can use the following commands:  
+triggerdoor - Triggers the front door opener  
+triggerlight - Triggers the light  
+togglepartymode - Enables/disables the Party-Mode  
+partymodeon - Sets Party-Mode enabled  
+partymodeoff - Sets Party-Mode disabled  
+partymodestate - Returns the state of the Party-Mode  
 
 ## FHEM API
 todo
