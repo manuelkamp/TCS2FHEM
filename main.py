@@ -13,7 +13,7 @@ from secrets import secrets
 from configs import configs
 
 rp2.country(configs['country'])
-version = "0.2-alpha"
+version = "0.3-alpha"
 
 Oled = Oled.Oled()
 TimeUtils = TimeUtils.TimeUtils()
@@ -156,7 +156,7 @@ def set_global_exception():
         #import sys
         #sys.print_exception(context["exception"])
         #sys.exit()
-        Reboot()
+        #Reboot()
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
@@ -262,20 +262,108 @@ async def APIHandling(reader, writer):
     await writer.drain()
     await writer.wait_closed()
 
+microsFlanke = 0
+def microsSeitLetzterFlanke():
+    global microsFlanke
+    return time.ticks_us() - microsFlanke
+
+sequenz = [
+    6000,
+    4000,
+    2000,
+    2000,
+    2000,
+    2000,
+    4000,
+    4000,
+    4000,
+    2000,
+    2000,
+    2000,
+    4000,
+    2000,
+    2000,
+    2000,
+    4000,
+    2000,
+    4000,
+    4000,
+    4000,
+    2000,
+    2000,
+    2000,
+    4000,
+    2000,
+    4000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    2000,
+    4000,
+    5000,
+    6000,
+    2000,
+    2000,
+    2000,
+    2000,
+    4000,
+    2000
+    ]
 # Hauptmethode für den TCS Bus Reader
 async def TCSBusReader():
-    global busline
+    global busline, microsFlanke
+    sequenzZaehler = 0
+    sequenzLaeuft = False
+    sequenzLaenge = 43
+    zustand = False
+    jitter = 400
+    #microsFlanke = 0
+    #microsSeitLetzterFlanke = time.ticks_us() - microsFlanke
     Logger.LogMessage("TCS Busreader started")
-    reading = busline.read_u16()
     while True:
-        #todo
-        i = 2
+        reading = busline.read_u16()
+        val = 1
+        if (reading >= 50000):
+            val = 1
+        else:
+            val = 0
+        if (val == 0 and zustand == False):
+            if (sequenzLaeuft == False):
+                sequenzLaeuft = True
+            else:
+                if (abs(microsSeitLetzterFlanke() - sequenz[sequenzZaehler]) < jitter):
+                    sequenzZaehler += 1
+                else:
+                    sequenzLaeuft = False
+                    sequenzZaehler = 0
+            print("Positive Flanke nach " + str(microsSeitLetzterFlanke()) + "us")
+            zustand = True
+            microsFlanke = time.ticks_us()
+        if (val == 1 and zustand == True):
+            if (sequenzLaeuft):
+                if (abs(microsSeitLetzterFlanke() - sequenz[sequenzZaehler]) < jitter):
+                    sequenzZaehler += 1
+                else:
+                    sequenzLaeuft = False
+                    sequenzZaehler = 0
+            print("Negative Flanke nach " + str(microsSeitLetzterFlanke()) + "us")
+            zustand = False
+            microsFlanke = time.ticks_us()
+        if (sequenzLaeuft and sequenzZaehler >= sequenzLaenge):
+            print("Sequenz fertig!")
+            #todo sendMessage()
+            sequenzLaeuft = False
+            sequenzZaehler = 0
+        #############
         #print("tcs")
         #if doorbell ringing is recognized, trigger external api
         #if frontdoorbell ringing is recognized, trigger external api
         #if frontdoorbell ringing is recognized and party-mode enabled, wait a short time and trigger DoorOpener and Licht
         #if any other message and log_incoming_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0)
 
 # Hauptroutine
 async def Main():
