@@ -62,7 +62,7 @@ The power circuit allows you to run the Pico W with a separate power source from
 ![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs_9-24v.png)  
 
 ## Networking  
-Be sure that you give your Pico a static IP address on your router, so you know where the webservice is availabel and can set it up in FHEM.
+Be sure that you give your Pico a static IP address on your router, so you know where the webservice is available and can set it up in FHEM.
 
 ## TCS2FHEM API  
 You can configure the port, on which the API runs in configs.py in the 'api_port'-value. You also have to set an API-Key in secrets.py in the 'api'-value. Then you can call the API as follows:  
