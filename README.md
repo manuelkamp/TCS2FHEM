@@ -31,7 +31,7 @@ api: API key (string)
 
 **Hint:** use `openssl rand -hex 20` to generate the api_key
 
-## Wiring of Display
+## Wiring of Display  
 ```
 OLED   =>    Pico  
 VCC    ->    VSYS  
@@ -45,17 +45,26 @@ SDA    ->    6
 SCL    ->    7   
 ```
 
-## Wiring of 4-Button Keypad
+## Wiring of 4-Button Keypad  
 ![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/4-key-pad-connector.png)  
 
-## Power circuit
-The power circuit allows you to run the Pico W directly from the TCS bus system's power. It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad folder of this repo. You can order/print your own PCB with that files.  
-![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs.png)  
+## Power circuit  
+### Power from TCS Bus  
+The power circuit allows you to run the Pico W directly from the TCS bus system's power. It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad subfolder 'power_from_tcs_bus' of this repo. You can order/print your own PCB with that files.  
+![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs_bus.png)  
 
-## Networking
+### Power from 5V power source
+The power circuit allows you to run the Pico W with a separate 5 Volt power source (f.e. a USB power adapter). It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad subfolder 'power_via_5v_source' of this repo. You can order/print your own PCB with that files.  
+![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs_5v.png)  
+
+### Power from 9-24V power source
+The power circuit allows you to run the Pico W with a separate power source from 9 Volt to 24 Volt. It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad subfolder 'power_via_9-24v_source' of this repo. You can order/print your own PCB with that files.  
+![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs_9-24v.png)  
+
+## Networking  
 Be sure that you give your Pico a static IP address on your router, so you know where the webservice is availabel and can set it up in FHEM.
 
-## TCS2FHEM API
+## TCS2FHEM API  
 You can configure the port, on which the API runs in configs.py in the 'api_port'-value. You also have to set an API-Key in secrets.py in the 'api'-value. Then you can call the API as follows:  
 http://servername/api_key/command[/json]  
 
@@ -67,5 +76,5 @@ partymodeon - Sets Party-Mode enabled
 partymodeoff - Sets Party-Mode disabled  
 partymodestate - Returns the state of the Party-Mode  
 
-## FHEM API
+## FHEM API  
 todo
