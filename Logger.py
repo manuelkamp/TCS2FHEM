@@ -6,6 +6,8 @@ class Logger():
     def __init__(self, hk_days):
         self.hk_days = hk_days
         self.TimeUtils = TimeUtils.TimeUtils()
+        if not "/logs" in os.listdir():
+            os.mkdir("/logs")            
 
     def LogMessage(self, message):
         print(message)
