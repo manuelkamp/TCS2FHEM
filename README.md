@@ -6,7 +6,11 @@ If you have a TCS door intercom system and want to integrate it into your FHEM i
 * [Raspberry Pico W](https://mk0.at/pico-w)  
 * [Waveshare 2,23" OLED Display](https://mk0.at/waveshare-oled)  
 * [4-Button Keypad](https://mk0.at/4-keypad)  
-* 3D-printed Custom Case for Pico and Button Keypad and power circuit
+* PCB for your need (see kicad folder for examples)  
+* 3D-printed Custom Case for Pico and Button Keypad and power circuit  
+
+## Prereqisites
+You need your PCB fully soldered with everything (you can use a Breadboard temporarily). Load the Micropython firmware onto your Pico W (I used the v1.19.1-782-g699477d12 (2022-12-20).uf2). It is highly recommended to load the newest firmware from the official repository: https://micropython.org/download/rp2-pico-w/ - But you can use the one I used too, see firmware folder. Then upload all *.py files to the Pico W root path and make a new folder called "logs".
 
 ## Instructions/Setup
 In the file configs.py set your configurations:  
