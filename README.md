@@ -10,7 +10,7 @@ If you have a TCS door intercom system and want to integrate it into your FHEM i
 * 3D-printed Custom Case for Pico and Button Keypad and power circuit  
 
 ## Prereqisites
-You need your PCB fully soldered with everything (you can use a Breadboard temporarily), including keypad and display. Load the Micropython firmware onto your Pico W. I used the v1.19.1-782-g699477d12 (2022-12-20).uf2. It is highly recommended to load the newest firmware from the official repository: https://micropython.org/download/rp2-pico-w/ - But you can use the one I used too, see firmware folder in this repository. Then upload all *.py files to the Pico W root path (follow the instructions for configuration) and connect the TCS Bus lines accordingly. Finally plug in power (if not powered by TCS bus).
+You need your PCB fully soldered with everything (you can use a Breadboard temporarily), including keypad and display. Load the Micropython firmware onto your Pico W. I used the v1.19.1-782-g699477d12 (2022-12-20).uf2. It is highly recommended to load the newest firmware from the official repository: https://micropython.org/download/rp2-pico-w/ - But you can use the one I used too, see firmware folder in this repository. Then upload all *.py files to the Pico W's root path (follow the instructions for configuration) and connect the TCS Bus lines accordingly. Finally plug in power (if not powered by TCS bus).
 
 ## Instructions/Setup
 In the file configs.py set your configurations:  
