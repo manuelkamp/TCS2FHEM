@@ -5,10 +5,10 @@ debounce_time = 0
 
 class Keypad():
     def __init__(self):
-        self.taste1 = Pin(19, Pin.IN, Pin.PULL_UP)
-        self.taste2 = Pin(18, Pin.IN, Pin.PULL_UP)
-        self.taste3 = Pin(21, Pin.IN, Pin.PULL_UP)
-        self.taste4 = Pin(20, Pin.IN, Pin.PULL_UP)
+        self.taste1 = Pin(21, Pin.IN, Pin.PULL_UP)
+        self.taste2 = Pin(21, Pin.IN, Pin.PULL_UP)
+        self.taste3 = Pin(18, Pin.IN, Pin.PULL_UP)
+        self.taste4 = Pin(19, Pin.IN, Pin.PULL_UP)
         
         self.taste1.irq(trigger=Pin.IRQ_FALLING, handler=self.callback)
         self.taste2.irq(trigger=Pin.IRQ_FALLING, handler=self.callback)
