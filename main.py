@@ -246,6 +246,11 @@ async def APIHandling(reader, writer):
                 stateis = "Party-Mode is " + PartyModeState()
             elif (req[2] == "ping"):
                 stateis = "OK"
+            elif (req[2] == "stats"):
+                stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message']
+            elif (req[2] == "reboot"):
+                stateis = "Rebooting device now..."
+                #todo reboot ausführen
             else:
                 stateis = "Error: Unknown command!"
         else:
@@ -257,7 +262,7 @@ async def APIHandling(reader, writer):
             response = html % stateis
             writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
     else:
-        stateis = "<b>Error:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
+        stateis = "<b>Error:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li><li>stats</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
         response = html % stateis
         writer.write('HTTP/1.0 500 Server Error\r\nContent-type: text/html\r\n\r\n')
     writer.write(response)
