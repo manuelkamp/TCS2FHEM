@@ -79,6 +79,9 @@ togglepartymode - Enables/disables the Party-Mode
 partymodeon - Sets Party-Mode enabled  
 partymodeoff - Sets Party-Mode disabled  
 partymodestate - Returns the state of the Party-Mode  
+ping - Check if the API is up and running  
+stats - Returns some stats of the device  
+reboot - Reboots the device
 
 ## FHEM API  
 todo
