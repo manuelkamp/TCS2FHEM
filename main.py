@@ -222,7 +222,7 @@ async def APIHandling(reader, writer):
         request = request.split()[1]
     except IndexError:
         pass
-    Logger.LogMessage("API request: " + request)
+    Logger.LogMessage("API request: " + request + " from Client IP: " + writer.get_extra_info('peername')[0])
     req = request.split('/')
     stateis = ""
     if (len(req) == 3 or len(req) == 4):
@@ -257,7 +257,7 @@ async def APIHandling(reader, writer):
             response = html % stateis
             writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
     else:
-        stateis = "<b>Error:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
+        stateis = "<b>Error:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
         response = html % stateis
         writer.write('HTTP/1.0 500 Server Error\r\nContent-type: text/html\r\n\r\n')
     writer.write(response)
@@ -400,5 +400,7 @@ def Boot():
 Boot()
 try:
     asyncio.run(Main())
+except KeyboardInterrupt:
+    Logger.LogMessage("Shutdown.")
 finally:
     asyncio.new_event_loop()
