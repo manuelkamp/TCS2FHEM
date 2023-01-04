@@ -13,7 +13,7 @@ from secrets import secrets
 from configs import configs
 
 rp2.country(configs['country'])
-version = "0.3-alpha"
+version = "0.4-alpha"
 
 Oled = Oled.Oled()
 TimeUtils = TimeUtils.TimeUtils()
@@ -244,6 +244,8 @@ async def APIHandling(reader, writer):
                 stateis = "Disabled Party-Mode"
             elif (req[2] == "partymodestate"):
                 stateis = "Party-Mode is " + PartyModeState()
+            elif (req[2] == "ping"):
+                stateis = "OK"
             else:
                 stateis = "Error: Unknown command!"
         else:
@@ -320,8 +322,6 @@ async def TCSBusReader():
     sequenzLaenge = 43
     zustand = False
     jitter = 400
-    #microsFlanke = 0
-    #microsSeitLetzterFlanke = time.ticks_us() - microsFlanke
     Logger.LogMessage("TCS Busreader started")
     while True:
         reading = busline.read_u16()
