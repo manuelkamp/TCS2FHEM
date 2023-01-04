@@ -368,6 +368,14 @@ async def TCSBusReader():
         #if frontdoorbell ringing is recognized and party-mode enabled, wait a short time and trigger DoorOpener and Licht
         #if any other message and log_incoming_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
         await asyncio.sleep(0)
+        
+# Hauptmethode für das tägliche Housekeeping
+async def Housekeeper():
+    #todo wenn es 1:00 Uhr ist, housekeeping ausführen
+    Logger.LogMessage("Housekeeper started")
+    while True:
+        Logger.Housekeeping()
+        await asyncio.sleep(60)
 
 # Hauptroutine
 async def Main():
@@ -383,6 +391,7 @@ async def Main():
     Logger.LogMessage("Booting complete with Firmware " + version)
     loop.create_task(UiHandling())
     loop.create_task(TCSBusReader())
+    loop.create_task(Housekeeper())
     loop.run_forever()
 
 # Booten des Device
