@@ -12,7 +12,7 @@ class Logger():
     def LogMessage(self, message):
         print(message)
         dt = machine.RTC().datetime()
-        file = open("/logs/"+str(dt[0])+"-"+str(dt[1])+"-"+str(dt[2])+".txt", "a")
+        file = open(("/logs/%04d-%02d-%02d.txt" % (dt[0], dt[1], dt[2])), "a")
         file.write(self.TimeUtils.DateTimeNow() + ";" + message + "\n")
         file.close()
     

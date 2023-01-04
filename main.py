@@ -60,7 +60,7 @@ def BuildScreen():
     # after 10 Seconds of no activity, go back to main screen
     if (lastActionTicks >= 20):
         subscreen = 0
-    # after 5 Minutes turn off the display
+    # after X Minutes turn off the display
     if (lastActionTicks >= (configs['displayoff'] * 60 * 2)):
         displayOff = True
         ShowText("","","")
@@ -214,7 +214,6 @@ html = """<!DOCTYPE html>
 json = """{ "TCS<->FHEM API":"%s" }"""
 async def APIHandling(reader, writer):
     request_line = await reader.readline()
-    # We are not interested in HTTP request headers, skip them
     while await reader.readline() != b"\r\n":
         pass
     request = str(request_line)
@@ -222,7 +221,7 @@ async def APIHandling(reader, writer):
         request = request.split()[1]
     except IndexError:
         pass
-    Logger.LogMessage("API request: " + request + " from Client IP: " + writer.get_extra_info('peername')[0])
+    Logger.LogMessage("API request: " + request + " - from client IP: " + writer.get_extra_info('peername')[0])
     req = request.split('/')
     stateis = ""
     if (len(req) == 3 or len(req) == 4):
