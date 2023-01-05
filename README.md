@@ -27,6 +27,7 @@ frontdoor_ringing_message: The TCS Bus message if someone rings the front door (
 door_ringing_message: The TCS Bus message if someone rings the door (hex)  
 door_trigger_message: The TCS Bus message to trigger the front door opener (hex)  
 light_trigger_message: The TCS Bus message to trigger the light (hex)  
+api_client_ip: Only this IP is allowed to use the API. Leave blank to allow all connections from all IPs.(string)  
 
 In the file secrets.py set your configurations:  
 ssid: Wifi name (string)  
