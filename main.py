@@ -55,7 +55,11 @@ def ShowText(line1, line2, line3):
 
 # Bildschirmausgabe
 def BuildScreen():
-    global subscreen, partyMode, lastActionTicks, displayOff
+    global subscreen, partyMode, lastActionTicks, displayOff, heartbeat
+    if heartbeat == "H":
+        heartbeat = " "
+    else:
+        heartbeat = "H"
     lastActionTicks += 1
     # after 10 Seconds of no activity, go back to main screen
     if (lastActionTicks >= 20):
@@ -66,7 +70,7 @@ def BuildScreen():
         ShowText("","","")
     else:
         if (subscreen == 0):
-            ShowText("TCS<->FHEM   " + Networking.IsWifiConnected() + " H", TimeUtils.DateTimeNow(), "Auf LiG PaM Chk")
+            ShowText("TCS<->FHEM   " + Networking.IsWifiConnected() + " " + heartbeat + "", TimeUtils.DateTimeNow(), "Auf LiG PaM Chk")
         elif (subscreen == 1):
             ShowText("Eingangstuer", "getriggert", "            Ext")
         elif (subscreen == 2):
