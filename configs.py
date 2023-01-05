@@ -13,4 +13,5 @@ configs = {
     'door_ringing_message': 'cdf',
     'door_trigger_message': 'aaa',
     'light_trigger_message': 'bbb',
+    'api_client_ip': '10.0.3.5',
     }

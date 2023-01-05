@@ -13,7 +13,7 @@ from secrets import secrets
 from configs import configs
 
 rp2.country(configs['country'])
-version = "0.4-alpha"
+version = "0.5-alpha"
 
 Oled = Oled.Oled()
 TimeUtils = TimeUtils.TimeUtils()
@@ -227,49 +227,56 @@ async def APIHandling(reader, writer):
         request = request.split()[1]
     except IndexError:
         pass
-    Logger.LogMessage("API request: " + request + " - from client IP: " + writer.get_extra_info('peername')[0])
-    req = request.split('/')
-    stateis = ""
-    if (len(req) == 3 or len(req) == 4):
-        if (req[1] == secrets['api']):
-            if (req[2] == "triggerdoor"):
-                TriggerDoor()
-                stateis = "Triggered front door opener"
-            elif (req[2] == "triggerlight"):
-                TriggerLicht()
-                stateis = "Triggered light"
-            elif (req[2] == "togglepartymode"):
-                TogglePartyMode()
-                stateis = "Toggled Party-Mode"
-            elif (req[2] == "partymodeon"):
-                SetPartyMode(True)
-                stateis = "Enabled Party-Mode"
-            elif (req[2] == "partymodeoff"):
-                SetPartyMode(False)
-                stateis = "Disabled Party-Mode"
-            elif (req[2] == "partymodestate"):
-                stateis = "Party-Mode is " + PartyModeState()
-            elif (req[2] == "ping"):
-                stateis = "OK"
-            elif (req[2] == "stats"):
-                stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message'] + "<br>CPU frequency (MHz): " + str(machine.freq()/1000000)
-            elif (req[2] == "reboot"):
-                stateis = "Rebooting device now..."
-                #todo reboot ausführen
-            else:
-                stateis = "Error: Unknown command!"
-        else:
-            stateis = "<b>Error:</b> API key is invalid!"
-        if (len(req) == 4 and req[3] == "json"):
-            response = json % stateis
-            writer.write('HTTP/1.0 200 OK\r\nContent-type: text/json\r\n\r\n')
-        else:
-            response = html % stateis
-            writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
-    else:
-        stateis = "<b>Error:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li><li>stats</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
+    client_ip = writer.get_extra_info('peername')[0]
+    Logger.LogMessage("API request: " + request + " - from client IP: " + client_ip)
+    if (configs['api_client_ip'] != "") and (configs['api_client_ip'] != client_ip):
+        Logger.LogMessage("Unauthorized client! Aborting API Handling now.")
+        stateis = "<b>Error 401:</b> Client '" + client_ip + "' is not authorized to use the API!<br><br>Set authorized client IP in configs.py!"
         response = html % stateis
-        writer.write('HTTP/1.0 500 Server Error\r\nContent-type: text/html\r\n\r\n')
+        writer.write('HTTP/1.0 401 Unauthorized\r\nContent-type: text/html\r\n\r\n')
+    else:
+        req = request.split('/')
+        stateis = ""
+        if (len(req) == 3 or len(req) == 4):
+            if (req[1] == secrets['api']):
+                if (req[2] == "triggerdoor"):
+                    TriggerDoor()
+                    stateis = "Triggered front door opener"
+                elif (req[2] == "triggerlight"):
+                    TriggerLicht()
+                    stateis = "Triggered light"
+                elif (req[2] == "togglepartymode"):
+                    TogglePartyMode()
+                    stateis = "Toggled Party-Mode"
+                elif (req[2] == "partymodeon"):
+                    SetPartyMode(True)
+                    stateis = "Enabled Party-Mode"
+                elif (req[2] == "partymodeoff"):
+                    SetPartyMode(False)
+                    stateis = "Disabled Party-Mode"
+                elif (req[2] == "partymodestate"):
+                    stateis = "Party-Mode is " + PartyModeState()
+                elif (req[2] == "ping"):
+                    stateis = "OK"
+                elif (req[2] == "stats"):
+                    stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message'] + "<br>CPU frequency (MHz): " + str(machine.freq()/1000000)
+                elif (req[2] == "reboot"):
+                    stateis = "Rebooting device now..."
+                    #todo reboot ausführen
+                else:
+                    stateis = "<b>Error:</b> Unknown command!"
+            else:
+                stateis = "<b>Error:</b> API key is invalid!"
+            if (len(req) == 4 and req[3] == "json"):
+                response = json % stateis
+                writer.write('HTTP/1.0 200 OK\r\nContent-type: text/json\r\n\r\n')
+            else:
+                response = html % stateis
+                writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
+        else:
+            stateis = "<b>Error 400:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li><li>stats</li><li>reboot</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
+            response = html % stateis
+            writer.write('HTTP/1.0 400 Bad Request\r\nContent-type: text/html\r\n\r\n')
     writer.write(response)
     await writer.drain()
     await writer.wait_closed()
