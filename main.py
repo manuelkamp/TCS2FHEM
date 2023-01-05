@@ -82,7 +82,7 @@ def BuildScreen():
         elif (subscreen == 7):
             ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
         elif (subscreen == 8):
-            ShowText("CPU Frequency:", str(machine.freq()) + " Hz", "Up  Dwn     Ext")
+            ShowText("CPU Frequency:", str(machine.freq()/1000000) + " Hz", "Up  Dwn     Ext")
         elif (subscreen == 9):
             ShowText("Firmware vers.:", version, "Up  Dwn     Ext")
         elif (subscreen == 10):
@@ -153,6 +153,7 @@ def TriggerDoor():
 def set_global_exception():
     def handle_exception(loop, context):
         Logger.LogMessage("Fatal error: " + str(context["exception"]))
+        #todo bei prod-version folgende Zeilen einkommentieren
         #import sys
         #sys.print_exception(context["exception"])
         #sys.exit()
@@ -246,7 +247,7 @@ async def APIHandling(reader, writer):
             elif (req[2] == "ping"):
                 stateis = "OK"
             elif (req[2] == "stats"):
-                stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message']
+                stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message'] + "<br>CPU frequency (MHz): " + str(machine.freq()/1000000)
             elif (req[2] == "reboot"):
                 stateis = "Rebooting device now..."
                 #todo reboot ausführen
