@@ -67,3 +67,9 @@ class Networking():
     
     def GetIPAddress(self):
         return wlan.ifconfig()[0]
+    
+    def IsWifiConnected(self):
+        if wlan.status() == 3:
+            return "W"
+        else:
+            return " "
