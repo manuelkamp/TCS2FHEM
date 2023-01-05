@@ -54,6 +54,7 @@ def ShowText(line1, line2, line3):
     Oled.show()
 
 # Bildschirmausgabe
+heartbeat = "H"
 def BuildScreen():
     global subscreen, partyMode, lastActionTicks, displayOff, heartbeat
     if heartbeat == "H":
