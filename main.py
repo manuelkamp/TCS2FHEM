@@ -53,6 +53,13 @@ def ShowText(line1, line2, line3):
     Oled.text(line3,1,22,Oled.white)  
     Oled.show()
 
+# Heartbeat Symbol for Main screen
+def Heartbeat():
+    if TimeUtils.IsEvenSecond():
+        return "H"
+    else:
+        return " "
+
 # Bildschirmausgabe
 def BuildScreen():
     global subscreen, partyMode, lastActionTicks, displayOff
@@ -66,7 +73,7 @@ def BuildScreen():
         ShowText("","","")
     else:
         if (subscreen == 0):
-            ShowText("TCS<->FHEM", TimeUtils.DateTimeNow(), "Auf LiG PaM Chk")
+            ShowText("TCS<->FHEM   " + Networking.IsWifiConnected() + " " + Heartbeat() + "", TimeUtils.DateTimeNow(), "Auf LiG PaM Chk")
         elif (subscreen == 1):
             ShowText("Eingangstuer", "getriggert", "            Ext")
         elif (subscreen == 2):
@@ -82,7 +89,7 @@ def BuildScreen():
         elif (subscreen == 7):
             ShowText("API key:", secrets['api'], "Up  Dwn     Ext")
         elif (subscreen == 8):
-            ShowText("CPU Frequency:", str(machine.freq()/1000000) + " Hz", "Up  Dwn     Ext")
+            ShowText("CPU Frequency:", str(machine.freq()/1000000) + " MHz", "Up  Dwn     Ext")
         elif (subscreen == 9):
             ShowText("Firmware vers.:", version, "Up  Dwn     Ext")
         elif (subscreen == 10):

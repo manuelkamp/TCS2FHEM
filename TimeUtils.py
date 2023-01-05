@@ -14,3 +14,9 @@ class TimeUtils():
             return True
         else:
             return False
+
+    def IsEvenSecond(self):
+        if time.gmtime()[5] % 2 == 0:
+            return True
+        else:
+            return False
