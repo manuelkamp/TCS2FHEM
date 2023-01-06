@@ -261,7 +261,7 @@ async def APIHandling(reader, writer):
                 elif (req[2] == "ping"):
                     stateis = "OK"
                 elif (req[2] == "stats"):
-                    stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message'] + "<br>CPU frequency (MHz): " + str(machine.freq()/1000000)
+                    stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + str(configs['frontdoor_ringing_message']) + "<br>Message 'Door ringing': " + str(configs['door_ringing_message']) + "<br>Message 'Door opener triggered': " + str(configs['door_trigger_message']) + "<br>Message 'Light triggered': " + str(configs['light_trigger_message']) + "<br>CPU frequency (MHz): " + str(machine.freq()/1000000)
                 elif (req[2] == "reboot"):
                     stateis = "Rebooting device now..."
                     Reboot()
@@ -304,11 +304,9 @@ async def TCSBusReader():
         #measure voltage changes and time in between
         dauer = microsSeitLetzterFlanke()
         if (dauer > 10000) and (message): #handle recieved message, and reset message
-            #print(message) #todo remove this print of original message
             message.pop(0) #remove first timing, because we do not need it
-            for i in range(len(message)):
+            for i in range(len(message)): #encode message
                 message[i] = int(((round(message[i] / 1000.0) * 1000.0) / 2000) - 1)
-            #print(message) #todo do something with this message instead of printing it out
             if (message == configs['light_trigger_message']):
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for triggering light: " + str(message))
@@ -348,8 +346,21 @@ async def TCSBusReader():
 
 # Main method for the TCS:Bus writer
 def TCSBusWriter(message):
-    #todo implement writing on bus
-    pass
+    for i in range(len(message)): #decode message
+        message[i] = int((message[i] + 1) * 2000)
+    #start sending message
+    sendZero = True
+    triggerline.on()
+    for i in range(len(message)):
+        time.sleep_us(message[i])
+        sendZero = not sendZero
+        if sendZero:
+            triggerline.on()
+        else:
+            triggerline.off()
+    #finally end sending message
+    triggerline.off()
+    sendZero = False
 
 # Main method for daily housekeeping
 async def Housekeeper():
