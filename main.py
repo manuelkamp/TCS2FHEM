@@ -290,7 +290,7 @@ def microsSeitLetzterFlanke():
 
 # Main method for the TCS:Bus reader
 async def TCSBusReader():
-    global busline, microsFlanke
+    global busline, microsFlanke, partyMode
     zustand = False
     Logger.LogMessage("TCS Busreader started")
     message = []
@@ -325,6 +325,10 @@ async def TCSBusReader():
             elif (message == configs['frontdoor_ringing_message']):
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
+                if (partyMode):
+                    TriggerDoor()
+                    time.sleep(2)
+                    TriggerLicht()
                 print ("haustürklingel")
                 #todo trigger external api
             else:
