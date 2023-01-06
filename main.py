@@ -150,7 +150,6 @@ def TriggerLicht():
 
 # Triggert den Türöffner
 def TriggerDoor():
-    #todo
     global subscreen
     subscreen = 1
     Logger.LogMessage("Triggering Door")
@@ -292,9 +291,6 @@ def microsSeitLetzterFlanke():
 # Hauptmethode für den TCS Bus Reader
 async def TCSBusReader():
     global busline, microsFlanke
-    #lastone = False
-    #sendenAktiv = False
-    #jitter = 600
     zustand = False
     Logger.LogMessage("TCS Busreader started")
     message = []
@@ -307,7 +303,7 @@ async def TCSBusReader():
             val = 0
         #measure voltage changes and time in between
         dauer = microsSeitLetzterFlanke()
-        if (dauer > 10000) and (message): #print previous message, and reset message
+        if (dauer > 10000) and (message): #handle recieved message, and reset message
             #print(message) #todo remove this print of original message
             message.pop(0) #remove first timing, because we do not need it
             for i in range(len(message)):
@@ -316,19 +312,21 @@ async def TCSBusReader():
             if (message == configs['light_trigger_message']):
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for triggering light: " + str(message))
-                print ("licht getriggert")
+                #nothing else to do
             elif (message == configs['door_trigger_message']):
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for door trigger: " + str(message))
-                print ("türöffner getriggert")
+                #nothing else to do
             elif (message == configs['door_ringing_message']):
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for door ringing: " + str(message))
                 print ("türklingel")
+                #todo trigger external api
             elif (message == configs['frontdoor_ringing_message']):
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
                 print ("haustürklingel")
+                #todo trigger external api
             else:
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Unknown TCS:Bus message: " + str(message))
