@@ -82,7 +82,9 @@ partymodeoff - Sets Party-Mode disabled
 partymodestate - Returns the state of the Party-Mode  
 ping - Check if the API is up and running  
 stats - Returns some stats of the device  
-reboot - Reboots the device
+reboot - Reboots the device  
+ringdoor - Sends "ring doorbell" message to TCS:Bus  
+ringfrontdoor - Sends "ring front doorbell" message to TCS:Bus  
 
 ## FHEM API  
 todo
