@@ -332,8 +332,9 @@ async def TCSBusReader():
                 if (configs['log_incoming_bus_messages']):
                     Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
                 if (partyMode):
+                    time.sleep(0.5)
                     TriggerDoor()
-                    time.sleep(2)
+                    time.sleep(1)
                     TriggerLicht()
                 print ("haustürklingel")
                 #todo trigger external api
