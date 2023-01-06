@@ -265,6 +265,12 @@ async def APIHandling(reader, writer):
                 elif (req[2] == "reboot"):
                     stateis = "Rebooting device now..."
                     Reboot()
+                elif (req[2] == "ringdoor"):
+                    stateis = "Ringing doorbell"
+                    TCSBusWriter(configs['door_ringing_message'])
+                elif (req[2] == "ringfrontdoor"):
+                    stateis = "Ringing front doorbell"
+                    TCSBusWriter(configs['frontdoor_ringing_message'])
                 else:
                     stateis = "<b>Error:</b> Unknown command!"
             else:
@@ -276,7 +282,7 @@ async def APIHandling(reader, writer):
                 response = html % stateis
                 writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
         else:
-            stateis = "<b>Error 400:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li><li>stats</li><li>reboot</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
+            stateis = "<b>Error 400:</b> Invalid usage of API!<br><br><u>Usage:</u> http://servername/api_key/command[/json]<br><br><u>Commands:</u><ul><li>triggerdoor</li><li>triggerlight</li><li>togglepartymode</li><li>partymodeon</li><li>partymodeoff</li><li>partymodestate</li><li>ping</li><li>stats</li><li>reboot</li><li>ringdoor</li><li>ringfrontdoor</li></ul><br><u>API Key:</u> set 'api' in secrets.py file."
             response = html % stateis
             writer.write('HTTP/1.0 400 Bad Request\r\nContent-type: text/html\r\n\r\n')
     writer.write(response)
