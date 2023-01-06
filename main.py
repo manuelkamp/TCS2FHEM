@@ -8,6 +8,7 @@ import uasyncio as asyncio
 import utime as time
 import Keypad
 import usocket as socket
+from machine import ADC, Pin
 
 from secrets import secrets
 from configs import configs
@@ -28,7 +29,8 @@ subscreen = 0
 sc = 0
 partyMode = False
 displayOff = False
-busline = machine.ADC(28)
+busline = ADC(28)
+triggerline = Pin(15, Pin.OUT)
 
 # Führt einen Reboot des Pico aus (z.B. im Fehlerfall)
 def Reboot():
@@ -144,6 +146,7 @@ def TriggerLicht():
     global subscreen
     subscreen = 2
     Logger.LogMessage("Triggering Licht")
+    
 
 # Triggert den Türöffner
 def TriggerDoor():
@@ -262,7 +265,7 @@ async def APIHandling(reader, writer):
                     stateis = "IP address: " + Networking.GetIPAddress() + "<br>MAC address: " + Networking.GetMACAddress() + "<br>Hostname: " + configs['hostname'] + "<br>API Port: " + str(configs['api_port']) + "<br>Uptime (h:m): " + Uptime() + "<br>Date/Time: " + TimeUtils.DateTimeNow() + "<br>Version: " + version + "<br>GMT Timezone Offset (hours): " + str(configs['gmt_offset']) + "<br>Auto summertime: " + str(configs['auto_summertime']) + "<br>Display off time (mins): " + str(configs['displayoff']) + "<br>Log incoming bus messages: " + str(configs['log_incoming_bus_messages']) + "<br>Housekeep logfiles after days: " + str(configs['log_housekeeping_days']) + "<br>Message 'Front door ringing': " + configs['frontdoor_ringing_message'] + "<br>Message 'Door ringing': " + configs['door_ringing_message'] + "<br>Message 'Door opener triggered': " + configs['door_trigger_message'] + "<br>Message 'Light triggered': " + configs['light_trigger_message'] + "<br>CPU frequency (MHz): " + str(machine.freq()/1000000)
                 elif (req[2] == "reboot"):
                     stateis = "Rebooting device now..."
-                    #todo reboot ausführen
+                    Reboot()
                 else:
                     stateis = "<b>Error:</b> Unknown command!"
             else:
@@ -286,102 +289,61 @@ def microsSeitLetzterFlanke():
     global microsFlanke
     return time.ticks_us() - microsFlanke
 
-sequenz = [
-    6000,
-    4000,
-    2000,
-    2000,
-    2000,
-    2000,
-    4000,
-    4000,
-    4000,
-    2000,
-    2000,
-    2000,
-    4000,
-    2000,
-    2000,
-    2000,
-    4000,
-    2000,
-    4000,
-    4000,
-    4000,
-    2000,
-    2000,
-    2000,
-    4000,
-    2000,
-    4000,
-    2000,
-    2000,
-    2000,
-    2000,
-    2000,
-    2000,
-    2000,
-    4000,
-    5000,
-    6000,
-    2000,
-    2000,
-    2000,
-    2000,
-    4000,
-    2000
-    ]
 # Hauptmethode für den TCS Bus Reader
 async def TCSBusReader():
     global busline, microsFlanke
-    sequenzZaehler = 0
-    sequenzLaeuft = False
-    sequenzLaenge = 43
+    #lastone = False
+    #sendenAktiv = False
+    #jitter = 600
     zustand = False
-    jitter = 400
     Logger.LogMessage("TCS Busreader started")
+    message = []
     while True:
-        reading = busline.read_u16()
+        busValue = busline.read_u16()
         val = 1
-        if (reading >= 50000):
+        if (busValue >= 50000): #voltage on TCS:Bus 0...65535
             val = 1
         else:
             val = 0
-        if (val == 0 and zustand == False):
-            if (sequenzLaeuft == False):
-                sequenzLaeuft = True
+        #measure voltage changes and time in between
+        dauer = microsSeitLetzterFlanke()
+        if (dauer > 10000) and (message): #print previous message, and reset message
+            #print(message) #todo remove this print of original message
+            message.pop(0) #remove first timing, because we do not need it
+            for i in range(len(message)):
+                message[i] = int(((round(message[i] / 1000.0) * 1000.0) / 2000) - 1)
+            #print(message) #todo do something with this message instead of printing it out
+            if (message == configs['light_trigger_message']):
+                if (configs['log_incoming_bus_messages']):
+                    Logger.LogMessage("Incoming TCS:Bus message for triggering light: " + str(message))
+                print ("licht getriggert")
+            elif (message == configs['door_trigger_message']):
+                if (configs['log_incoming_bus_messages']):
+                    Logger.LogMessage("Incoming TCS:Bus message for door trigger: " + str(message))
+                print ("türöffner getriggert")
+            elif (message == configs['door_ringing_message']):
+                if (configs['log_incoming_bus_messages']):
+                    Logger.LogMessage("Incoming TCS:Bus message for door ringing: " + str(message))
+                print ("türklingel")
+            elif (message == configs['frontdoor_ringing_message']):
+                if (configs['log_incoming_bus_messages']):
+                    Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
+                print ("haustürklingel")
             else:
-                if (abs(microsSeitLetzterFlanke() - sequenz[sequenzZaehler]) < jitter):
-                    sequenzZaehler += 1
-                else:
-                    sequenzLaeuft = False
-                    sequenzZaehler = 0
-            print("Positive Flanke nach " + str(microsSeitLetzterFlanke()) + "us")
-            zustand = True
-            microsFlanke = time.ticks_us()
-        if (val == 1 and zustand == True):
-            if (sequenzLaeuft):
-                if (abs(microsSeitLetzterFlanke() - sequenz[sequenzZaehler]) < jitter):
-                    sequenzZaehler += 1
-                else:
-                    sequenzLaeuft = False
-                    sequenzZaehler = 0
-            print("Negative Flanke nach " + str(microsSeitLetzterFlanke()) + "us")
-            zustand = False
-            microsFlanke = time.ticks_us()
-        if (sequenzLaeuft and sequenzZaehler >= sequenzLaenge):
-            print("Sequenz fertig!")
-            #todo sendMessage()
-            sequenzLaeuft = False
-            sequenzZaehler = 0
-        #############
-        #print("tcs")
-        #if doorbell ringing is recognized, trigger external api
-        #if frontdoorbell ringing is recognized, trigger external api
-        #if frontdoorbell ringing is recognized and party-mode enabled, wait a short time and trigger DoorOpener and Licht
-        #if any other message and log_incoming_bus_messages is true, log the messages to the bus (it may help identify useful messages, or if someone ringed at your neighbours door)
+                if (configs['log_incoming_bus_messages']):
+                    Logger.LogMessage("Unknown TCS:Bus message: " + str(message))
+            message = []
+        else:
+            if (val == 0 and zustand == False):
+                message.append(dauer)
+                zustand = True
+                microsFlanke = time.ticks_us()
+            if (val == 1 and zustand == True):
+                message.append(dauer)
+                zustand = False
+                microsFlanke = time.ticks_us()
         await asyncio.sleep(0)
-        
+
 # Hauptmethode für das tägliche Housekeeping
 async def Housekeeper():
     #todo wenn es 1:00 Uhr ist, housekeeping ausführen
