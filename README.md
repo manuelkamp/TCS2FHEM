@@ -1,6 +1,6 @@
 # TCS2FHEM  !!!WORK IN PROGRESS!!!
 
-If you have a TCS door intercom system and want to integrate it into your FHEM instance, this is a project for you. The goal of this project is to have a device, that connects the TCS intercom to FHEM. It should allow to trigger the dooropener and other functions (such as switching on the light) in FHEM. Also it should send events (like someone ringed the bell at the front door, or someone ringed the bell at the main door) to FHEM, so you can automate it (send notifications, interact...)  
+If you have a TCS:Bus door intercom system and want to integrate it into your FHEM instance, this is a project for you. The goal of this project is to have a device, that connects the TCS:Bus intercom to FHEM. It should allow to trigger the dooropener and other functions (such as switching on the light) in FHEM. Also it should send events (like someone ringed the bell at the front door, or someone ringed the bell at the main door) to FHEM, so you can automate it (send notifications, interact...)  
 
 ## Hardware  
 * [Raspberry Pico W](https://mk0.at/pico-w)  
@@ -10,7 +10,7 @@ If you have a TCS door intercom system and want to integrate it into your FHEM i
 * 3D-printed Custom Case for Pico and Button Keypad and power circuit (see case_5v_PCB folder as an example)  
 
 ## Prereqisites
-You need your PCB fully soldered with everything (you can use a Breadboard temporarily), including keypad and display. Load the Micropython firmware onto your Pico W. I used the v1.19.1-782-g699477d12 (2022-12-20).uf2. It is highly recommended to load the newest firmware from the official repository: https://micropython.org/download/rp2-pico-w/ - But you can use the one I used too, see firmware folder in this repository. Then upload all *.py files to the Pico W's root path (follow the instructions for configuration) and connect the TCS Bus lines accordingly. Finally plug in power (if not powered by TCS bus).
+You need your PCB fully soldered with everything (you can use a Breadboard temporarily), including keypad and display. Load the Micropython firmware onto your Pico W. I used the v1.19.1-782-g699477d12 (2022-12-20).uf2. It is highly recommended to load the newest firmware from the official repository: https://micropython.org/download/rp2-pico-w/ - But you can use the one I used too, see firmware folder in this repository. Then upload all *.py files to the Pico W's root path (follow the instructions for configuration) and connect the TCS Bus lines accordingly. Finally plug in power (if not powered by TCS:Bus).
 
 ## Instructions/Setup
 In the file configs.py set your configurations:  
@@ -55,7 +55,7 @@ SCL    ->    7
 
 ## Power circuit  
 ### Power from TCS Bus  
-The power circuit allows you to run the Pico W directly from the TCS bus system's power. It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad subfolder 'power_from_tcs_bus' of this repo. You can order/print your own PCB with that files.  
+The power circuit allows you to run the Pico W directly from the TCS:Bus system's power. It also connects the bus to the Pico to read and write from it. The circuit files for KiCad are stored in the kicad subfolder 'power_from_tcs_bus' of this repo. You can order/print your own PCB with that files.  
 ![picture](https://git.kmpr.at/kamp/TCS2FHEM/raw/branch/main/docs/pico_tcs_bus.png)  
 
 ### Power from 5V power source
@@ -88,3 +88,6 @@ ringfrontdoor - Sends "ring front doorbell" message to TCS:Bus
 
 ## FHEM API  
 todo
+
+## Legal remarks
+I am not affiliated to TCSAG and/or any of their brands and/or trademarks, nor do I have any business information on the proprietary TCS:Bus. I just reverse engineered it, to include my intercom system into my home automation and shared my research here. All Rights to the possible Trademark TCS:Bus and all things connected, remain untouched by this open source project.
