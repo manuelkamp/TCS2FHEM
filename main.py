@@ -344,11 +344,12 @@ async def TCSBusReader():
 
 # Hauptmethode für das tägliche Housekeeping
 async def Housekeeper():
-    #todo wenn es 1:00 Uhr ist, housekeeping ausführen
     Logger.LogMessage("Housekeeper started")
     while True:
+        Logger.LogMessage("Housekeeper is performing actions")
         Logger.Housekeeping()
-        await asyncio.sleep(60)
+        #todo also do a ntp sync
+        await asyncio.sleep(86400)
 
 # Hauptroutine
 async def Main():
@@ -369,7 +370,6 @@ async def Main():
 
 # Booten des Device
 def Boot():
-    Logger.Housekeeping()
     ShowText("Booting [1/3]", "Conn. Wifi:", secrets['ssid'] + "...")
     ShowText("Booting [1/3]", "Conn. Wifi: MAC", Networking.GetMACAddress())
     Networking.Connect(configs['disable_wifi_powersavingmode'])
