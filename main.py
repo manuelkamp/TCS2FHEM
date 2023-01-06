@@ -428,5 +428,7 @@ try:
     asyncio.run(Main())
 except KeyboardInterrupt:
     Logger.LogMessage("Shutdown.")
+    Oled.fill(0x0000)
+    Oled.show()
 finally:
     asyncio.new_event_loop()

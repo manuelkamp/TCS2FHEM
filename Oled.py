@@ -27,7 +27,7 @@ class Oled(framebuf.FrameBuffer):
         self.init_display()
         
         self.white =   0xffff
-        self.balck =   0x0000
+        self.black =   0x0000
         
     def write_cmd(self, cmd):
         self.cs(1)
