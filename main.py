@@ -14,7 +14,7 @@ from secrets import secrets
 from configs import configs
 
 rp2.country(configs['country'])
-version = "0.6-alpha"
+version = "0.7-alpha"
 
 Oled = Oled.Oled()
 TimeUtils = TimeUtils.TimeUtils()
@@ -74,7 +74,7 @@ def BuildScreen():
         ShowText("","","")
     else:
         if (subscreen == 0):
-            ShowText("TCS<->FHEM   " + Networking.IsWifiConnected() + " " + heartbeat + "", TimeUtils.DateTimeNow(), "Auf LiG PaM Chk")
+            ShowText("TCS<->FHEM " + PartyModeActive() + " " + Networking.IsWifiConnected() + " " + heartbeat + "", TimeUtils.DateTimeNow(), "Auf LiG PaM Chk")
         elif (subscreen == 1):
             ShowText("Eingangstuer", "getriggert", "            Ext")
         elif (subscreen == 2):
@@ -141,19 +141,13 @@ def PartyModeState():
     else:
         return "disabled"
 
-# Triggering the light
-def TriggerLicht():
-    global subscreen
-    subscreen = 2
-    Logger.LogMessage("Triggering Licht")
-    TCSBusWriter(configs['light_trigger_message'])
-
-# Triggering the door opener
-def TriggerDoor():
-    global subscreen
-    subscreen = 1
-    Logger.LogMessage("Triggering Door")
-    TCSBusWriter(configs['door_trigger_message'])
+# Returns status symbol if party-mode is active
+def PartyModeActive():
+    global PartyMode
+    if (partyMode):
+        return "P"
+    else:
+        return " "
 
 #####################################################################
 
@@ -162,9 +156,9 @@ def set_global_exception():
     def handle_exception(loop, context):
         Logger.LogMessage("Fatal error: " + str(context["exception"]))
         #todo bei prod-version folgende Zeilen einkommentieren
-        #import sys
-        #sys.print_exception(context["exception"])
-        #sys.exit()
+        import sys
+        sys.print_exception(context["exception"])
+        sys.exit()
         #Reboot()
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
@@ -188,9 +182,13 @@ async def UiHandling():
                     elif (Keypad.tastePressed == Keypad.taste2):
                         TogglePartyMode()
                     elif (Keypad.tastePressed == Keypad.taste3):
-                        TriggerLicht()
+                        subscreen = 2
+                        Logger.LogMessage("Triggering Licht")
+                        await TCSBusWriter(configs['light_trigger_message'])
                     elif (Keypad.tastePressed == Keypad.taste4):
-                        TriggerDoor()
+                        subscreen = 1
+                        Logger.LogMessage("Triggering Door")
+                        await TCSBusWriter(configs['door_trigger_message'])
                     else:
                         Logger.LogMessage("Error: Invalid Button pressed!")
                 elif (subscreen == 1 or subscreen == 2 or subscreen == 3):
@@ -243,10 +241,12 @@ async def APIHandling(reader, writer):
         if (len(req) == 3 or len(req) == 4):
             if (req[1] == secrets['api']):
                 if (req[2] == "triggerdoor"):
-                    TriggerDoor()
+                    Logger.LogMessage("Triggering Door")
+                    await TCSBusWriter(configs['door_trigger_message'])
                     stateis = "Triggered front door opener"
                 elif (req[2] == "triggerlight"):
-                    TriggerLicht()
+                    Logger.LogMessage("Triggering Licht")
+                    await TCSBusWriter(configs['light_trigger_message'])
                     stateis = "Triggered light"
                 elif (req[2] == "togglepartymode"):
                     TogglePartyMode()
@@ -268,10 +268,10 @@ async def APIHandling(reader, writer):
                     Reboot()
                 elif (req[2] == "ringdoor"):
                     stateis = "Ringing doorbell"
-                    TCSBusWriter(configs['door_ringing_message'])
+                    await TCSBusWriter(configs['door_ringing_message'])
                 elif (req[2] == "ringfrontdoor"):
                     stateis = "Ringing front doorbell"
-                    TCSBusWriter(configs['frontdoor_ringing_message'])
+                    await TCSBusWriter(configs['frontdoor_ringing_message'])
                 elif (req[2] == "logs"):
                     stateis = Logger.LastLogs()
                 else:
@@ -335,9 +335,10 @@ async def TCSBusReader():
                         Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
                     if (partyMode):
                         time.sleep(0.5)
-                        TriggerDoor()
+                        Logger.LogMessage("Triggering Door and Light for Party-Mode")
+                        await TCSBusWriter(configs['door_trigger_message'])
                         time.sleep(1)
-                        TriggerLicht()
+                        await TCSBusWriter(configs['light_trigger_message'])
                     print ("haustürklingel")
                     #todo trigger external api
                 else:
@@ -356,24 +357,26 @@ async def TCSBusReader():
             await asyncio.sleep(0)
 
 # Main method for the TCS:Bus writer
-def TCSBusWriter(message):
+async def TCSBusWriter(message):
     global writerActive
-    writerActive = True
-    for i in range(len(message)): #decode message
-        message[i] = int((message[i] + 1) * 2000)
-    #start sending message
-    sendZero = True
-    triggerline.on()
-    for i in range(len(message)):
-        time.sleep_us(message[i])
-        sendZero = not sendZero
-        if sendZero:
-            triggerline.on()
-        else:
-            triggerline.off()
-    #finally end sending message
-    triggerline.off()
-    writerActive = False
+    if (message):
+        busMessage = list(message)
+        writerActive = True
+        for i in range(len(busMessage)): #decode message
+            busMessage[i] = int((busMessage[i] + 1) * 2000)
+        #start sending message
+        sendZero = True
+        triggerline.on()
+        for i in range(len(busMessage)):
+            time.sleep_us(busMessage[i])
+            sendZero = not sendZero
+            if sendZero:
+                triggerline.on()
+            else:
+                triggerline.off()
+        #finally end sending message
+        triggerline.off()
+        writerActive = False
 
 # Main method for daily housekeeping
 async def Housekeeper():
