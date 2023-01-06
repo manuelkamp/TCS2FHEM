@@ -28,4 +28,5 @@ class Logger():
         dt = machine.RTC().datetime()
         file = open(("/logs/%04d-%02d-%02d.txt" % (dt[0], dt[1], dt[2])), "r")
         lines = file.readlines()
+        file.close()
         return "<br>".join(lines[-10:])

@@ -31,6 +31,7 @@ partyMode = False
 displayOff = False
 busline = ADC(28)
 triggerline = Pin(15, Pin.OUT)
+writerActive = False
 
 # Reboots the Pico W (f.e. in case of an error)
 def Reboot():
@@ -298,63 +299,66 @@ def microsSeitLetzterFlanke():
 
 # Main method for the TCS:Bus reader
 async def TCSBusReader():
-    global busline, microsFlanke, partyMode
+    global busline, microsFlanke, partyMode, writerActive
     zustand = False
     Logger.LogMessage("TCS Busreader started")
     message = []
     while True:
-        busValue = busline.read_u16()
-        val = 1
-        if (busValue >= 50000): #voltage on TCS:Bus 0...65535
+        if not writerActive:
+            busValue = busline.read_u16()
             val = 1
-        else:
-            val = 0
-        #measure voltage changes and time in between
-        dauer = microsSeitLetzterFlanke()
-        if (dauer > 10000) and (message): #handle recieved message, and reset message
-            message.pop(0) #remove first timing, because we do not need it
-            for i in range(len(message)): #encode message
-                message[i] = int(((round(message[i] / 1000.0) * 1000.0) / 2000) - 1)
-            if (message == configs['light_trigger_message']):
-                if (configs['log_incoming_bus_messages']):
-                    Logger.LogMessage("Incoming TCS:Bus message for triggering light: " + str(message))
-                #nothing else to do
-            elif (message == configs['door_trigger_message']):
-                if (configs['log_incoming_bus_messages']):
-                    Logger.LogMessage("Incoming TCS:Bus message for door trigger: " + str(message))
-                #nothing else to do
-            elif (message == configs['door_ringing_message']):
-                if (configs['log_incoming_bus_messages']):
-                    Logger.LogMessage("Incoming TCS:Bus message for door ringing: " + str(message))
-                print ("türklingel")
-                #todo trigger external api
-            elif (message == configs['frontdoor_ringing_message']):
-                if (configs['log_incoming_bus_messages']):
-                    Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
-                if (partyMode):
-                    time.sleep(0.5)
-                    TriggerDoor()
-                    time.sleep(1)
-                    TriggerLicht()
-                print ("haustürklingel")
-                #todo trigger external api
+            if (busValue >= 50000): #voltage on TCS:Bus 0...65535
+                val = 1
             else:
-                if (configs['log_incoming_bus_messages']):
-                    Logger.LogMessage("Unknown TCS:Bus message: " + str(message))
-            message = []
-        else:
-            if (val == 0 and zustand == False):
-                message.append(dauer)
-                zustand = True
-                microsFlanke = time.ticks_us()
-            if (val == 1 and zustand == True):
-                message.append(dauer)
-                zustand = False
-                microsFlanke = time.ticks_us()
-        await asyncio.sleep(0)
+                val = 0
+            #measure voltage changes and time in between
+            dauer = microsSeitLetzterFlanke()
+            if (dauer > 10000) and (message): #handle recieved message, and reset message
+                message.pop(0) #remove first timing, because we do not need it
+                for i in range(len(message)): #encode message
+                    message[i] = int(((round(message[i] / 1000.0) * 1000.0) / 2000) - 1)
+                if (message == configs['light_trigger_message']):
+                    if (configs['log_incoming_bus_messages']):
+                        Logger.LogMessage("Incoming TCS:Bus message for triggering light: " + str(message))
+                    #nothing else to do
+                elif (message == configs['door_trigger_message']):
+                    if (configs['log_incoming_bus_messages']):
+                        Logger.LogMessage("Incoming TCS:Bus message for door trigger: " + str(message))
+                    #nothing else to do
+                elif (message == configs['door_ringing_message']):
+                    if (configs['log_incoming_bus_messages']):
+                        Logger.LogMessage("Incoming TCS:Bus message for door ringing: " + str(message))
+                    print ("türklingel")
+                    #todo trigger external api
+                elif (message == configs['frontdoor_ringing_message']):
+                    if (configs['log_incoming_bus_messages']):
+                        Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
+                    if (partyMode):
+                        time.sleep(0.5)
+                        TriggerDoor()
+                        time.sleep(1)
+                        TriggerLicht()
+                    print ("haustürklingel")
+                    #todo trigger external api
+                else:
+                    if (configs['log_incoming_bus_messages']):
+                        Logger.LogMessage("Unknown TCS:Bus message: " + str(message))
+                message = []
+            else:
+                if (val == 0 and zustand == False):
+                    message.append(dauer)
+                    zustand = True
+                    microsFlanke = time.ticks_us()
+                if (val == 1 and zustand == True):
+                    message.append(dauer)
+                    zustand = False
+                    microsFlanke = time.ticks_us()
+            await asyncio.sleep(0)
 
 # Main method for the TCS:Bus writer
 def TCSBusWriter(message):
+    global writerActive
+    writerActive = True
     for i in range(len(message)): #decode message
         message[i] = int((message[i] + 1) * 2000)
     #start sending message
@@ -369,7 +373,7 @@ def TCSBusWriter(message):
             triggerline.off()
     #finally end sending message
     triggerline.off()
-    sendZero = False
+    writerActive = False
 
 # Main method for daily housekeeping
 async def Housekeeper():
