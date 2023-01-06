@@ -1,4 +1,4 @@
-# TCS2FHEM  !!!WORK IN PROGRESS!!!
+# TCS2FHEM
 
 If you have a TCS:Bus door intercom system and want to integrate it into your FHEM instance, this is a project for you. The goal of this project is to have a device, that connects the TCS:Bus intercom to FHEM. It should allow to trigger the dooropener and other functions (such as switching on the light) in FHEM. Also it should send events (like someone ringed the bell at the front door, or someone ringed the bell at the main door) to FHEM, so you can automate it (send notifications, interact...)  
 
@@ -87,7 +87,7 @@ ringdoor - Sends "ring doorbell" message to TCS:Bus
 ringfrontdoor - Sends "ring front doorbell" message to TCS:Bus  
 
 ## FHEM API  
-todo
+Not implemented yet. Until I implement it, you can use HTTPMOD to control the TCS2FHEM device from FHEM, using the above API commands.
 
 ## Legal remarks
 I am not affiliated to TCSAG and/or any of their brands and/or trademarks, nor do I have any business information on the proprietary TCS:Bus. I just reverse engineered it, to include my intercom system into my home automation and shared my research here. All Rights to the possible Trademark TCS:Bus and all things connected, remain untouched by this open source project.
