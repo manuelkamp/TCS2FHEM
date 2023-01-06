@@ -14,7 +14,7 @@ from secrets import secrets
 from configs import configs
 
 rp2.country(configs['country'])
-version = "0.5-alpha"
+version = "0.6-alpha"
 
 Oled = Oled.Oled()
 TimeUtils = TimeUtils.TimeUtils()
@@ -32,12 +32,12 @@ displayOff = False
 busline = ADC(28)
 triggerline = Pin(15, Pin.OUT)
 
-# Führt einen Reboot des Pico aus (z.B. im Fehlerfall)
+# Reboots the Pico W (f.e. in case of an error)
 def Reboot():
     Logger.LogMessage("Performing Reboot")
     machine.reset()
 
-# Berechnet die Uptime in Sekunden
+# Calculates the uptime in hours and minutes
 def Uptime():
     global boottime
     seconds = (time.time() - boottime) % (24 * 3600)
@@ -47,7 +47,7 @@ def Uptime():
     seconds %= 60
     return "%d:%02d" % (hours, minutes)
 
-# Zeigt Text am Display an
+# Shows text on the display
 def ShowText(line1, line2, line3):
     Oled.fill(0x0000)
     Oled.text(line1,1,2,Oled.white)
@@ -55,7 +55,7 @@ def ShowText(line1, line2, line3):
     Oled.text(line3,1,22,Oled.white)  
     Oled.show()
 
-# Bildschirmausgabe
+# Main method for display output
 heartbeat = "H"
 def BuildScreen():
     global subscreen, partyMode, lastActionTicks, displayOff, heartbeat
@@ -99,7 +99,7 @@ def BuildScreen():
         else:
             ShowText("Error","Invalid Screen", "            Ext")
 
-# Helfermethode für Systemcheck-Anzeige
+# Helper-method for the systemcheck-output on the display
 def ShowSystemCheck(screen):
     global subscreen, sc
     if (screen == "start"):
@@ -115,7 +115,7 @@ def ShowSystemCheck(screen):
         sc = 7
     subscreen = sc + 4
 
-# Aktiviert/Deaktiviert den Party-Mode
+# Activates/deactivates the party-mode
 def TogglePartyMode():
     global subscreen, partyMode
     if (partyMode):
@@ -126,13 +126,13 @@ def TogglePartyMode():
         Logger.LogMessage("Party-Mode on")
     subscreen = 3
 
-# Setzt den Party-Mode auf Aktiv/Inaktiv
+# Sets the party-mode active/inactive
 def SetPartyMode(newValue):
     global partyMode
     partyMode = newValue
     Logger.LogMessage("Setting Party-Mode via API to " + PartyModeState())
 
-# Gibt den Status des Party-Mode zurück
+# Returns status of party-mode
 def PartyModeState():
     global partyMode
     if (partyMode):
@@ -140,23 +140,23 @@ def PartyModeState():
     else:
         return "disabled"
 
-# Triggert das Licht am Gang
+# Triggering the light
 def TriggerLicht():
-    #todo
     global subscreen
     subscreen = 2
     Logger.LogMessage("Triggering Licht")
-    
+    TCSBusWriter(configs['light_trigger_message'])
 
-# Triggert den Türöffner
+# Triggering the door opener
 def TriggerDoor():
     global subscreen
     subscreen = 1
     Logger.LogMessage("Triggering Door")
+    TCSBusWriter(configs['door_trigger_message'])
 
 #####################################################################
 
-# Helfer-Methode, um Fehler auch in asyncio ausgeben zu können
+# Helper-method to allow error handling and output in asyncio
 def set_global_exception():
     def handle_exception(loop, context):
         Logger.LogMessage("Fatal error: " + str(context["exception"]))
@@ -168,7 +168,7 @@ def set_global_exception():
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
-# Haupt-Methode für das ganze UI-Handling
+# Main method for all the UI-handling
 async def UiHandling():
     global interrupt_flag, lastActionTicks, displayOff, subscreen
     Logger.LogMessage("UI handling started")
@@ -211,7 +211,7 @@ async def UiHandling():
                         subscreen = 0
         await asyncio.sleep(0.5)
 
-# Hauptmethode für die API
+# Main method for the API
 html = """<!DOCTYPE html>
 <html>
     <head> <title>TCS<->FHEM</title> </head>
@@ -288,7 +288,7 @@ def microsSeitLetzterFlanke():
     global microsFlanke
     return time.ticks_us() - microsFlanke
 
-# Hauptmethode für den TCS Bus Reader
+# Main method for the TCS:Bus reader
 async def TCSBusReader():
     global busline, microsFlanke
     zustand = False
@@ -342,7 +342,12 @@ async def TCSBusReader():
                 microsFlanke = time.ticks_us()
         await asyncio.sleep(0)
 
-# Hauptmethode für das tägliche Housekeeping
+# Main method for the TCS:Bus writer
+def TCSBusWriter(message):
+    #todo implement writing on bus
+    pass
+
+# Main method for daily housekeeping
 async def Housekeeper():
     Logger.LogMessage("Housekeeper started")
     while True:
@@ -351,7 +356,7 @@ async def Housekeeper():
         #todo also do a ntp sync
         await asyncio.sleep(86400)
 
-# Hauptroutine
+# Main entry point after booting
 async def Main():
     set_global_exception()
     Logger.LogMessage("Entering MainLoop")
@@ -368,7 +373,7 @@ async def Main():
     loop.create_task(Housekeeper())
     loop.run_forever()
 
-# Booten des Device
+# Booting the device
 def Boot():
     ShowText("Booting [1/3]", "Conn. Wifi:", secrets['ssid'] + "...")
     ShowText("Booting [1/3]", "Conn. Wifi: MAC", Networking.GetMACAddress())
