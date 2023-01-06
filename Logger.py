@@ -23,3 +23,9 @@ class Logger():
                 if (self.TimeUtils.IsOlderThanDays(fd, self.hk_days)):
                     os.remove("/logs/" + file)
                     self.LogMessage("Housekeeping: deleted logfile " + file)
+
+    def LastLogs(self):
+        dt = machine.RTC().datetime()
+        file = open(("/logs/%04d-%02d-%02d.txt" % (dt[0], dt[1], dt[2])), "r")
+        lines = file.readlines()
+        return "<br>".join(lines[-10:])

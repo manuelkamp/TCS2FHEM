@@ -271,6 +271,8 @@ async def APIHandling(reader, writer):
                 elif (req[2] == "ringfrontdoor"):
                     stateis = "Ringing front doorbell"
                     TCSBusWriter(configs['frontdoor_ringing_message'])
+                elif (req[2] == "logs"):
+                    stateis = Logger.LastLogs()
                 else:
                     stateis = "<b>Error:</b> Unknown command!"
             else:
