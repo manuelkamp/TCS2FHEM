@@ -1,7 +1,7 @@
 # TCS2FHEM
 
 If you have a TCS:Bus door intercom system and want to integrate it into your FHEM instance, this is a project for you. The goal of this project is to have a device, that connects the TCS:Bus intercom to FHEM. It should allow to trigger the dooropener and other functions (such as switching on the light) in FHEM. Also it should send events (like someone ringed the bell at the front door, or someone ringed the bell at the main door) to FHEM, so you can automate it (send notifications, interact...)  
-## ATTENTION: THIS REPOSITORY IS A COPY AND WILL NOT BE UPDATED ON REGULAR BASIS. PLEASE GO TO https://git.kmpr.at/kamp/TCS2FHEM TO SEE THE LATEST CODE!
+## ATTENTION: THIS REPOSITORY IS A COPY AND WILL NOT BE UPDATED ON REGULAR BASIS. PLEASE GO TO https://git.kmpr.at/kamp/TCS2FHEM TO SEE THE LATEST CODE AND/OR SUBMIT PULL REQUESTS OR ISSUES!
 
 ## Hardware  
 * [Raspberry Pico W](https://mk0.at/pico-w)  
