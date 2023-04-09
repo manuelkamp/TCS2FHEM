@@ -33,6 +33,6 @@ class NTP():
             t2 = time.mktime((tm[0],10,(31-(int(5*tm[0]/4+1))%7),1,0,0,0,0))
             t = time.mktime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
             if t >= t1 and t < t2:
-                tm = time.gmtime(tm + 3600)
+                tm = time.gmtime(ntp_time - NTP_DELTA + 3600)
         machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
         return True
