@@ -5,7 +5,6 @@ import machine
 import time
 
 wlan = network.WLAN(network.STA_IF)
-mac = ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
 led = machine.Pin('LED', machine.Pin.OUT)
 
 class Networking():
@@ -15,11 +14,12 @@ class Networking():
         self.Logger = Logger
     
     def Connect(self, disable_wifi_powersavingmode):
+        global wlan
         wlan.active(True)
         #wlan.config(hostname=configs['hostname'])
-        if(disable_wifi_powersavingmode):
+        if (disable_wifi_powersavingmode):
             wlan.config(pm = 0xa11140)
-        self.Logger.LogMessage("mac = " + str(mac))
+        self.Logger.LogMessage("mac = " + self.GetMACAddress())
         self.Logger.LogMessage("channel = " + str(wlan.config('channel')))
         self.Logger.LogMessage("essid = " + str(wlan.config('essid')))
         self.Logger.LogMessage("txpower = " + str(wlan.config('txpower')))
@@ -43,6 +43,7 @@ class Networking():
     # -2 Link NoNet
     # -3 Link BadAuth
     def Status(self):
+        global wlan
         wlan_status = wlan.status()
         self.BlinkOnboardLED(wlan_status)
         if wlan_status != 3:
@@ -56,6 +57,7 @@ class Networking():
 
     # Blinkfunktion der Onboard-LED für Errorcodes   
     def BlinkOnboardLED(self, num_blinks):
+        global led
         for i in range(num_blinks):
             led.on()
             time.sleep(.2)
@@ -63,12 +65,14 @@ class Networking():
             time.sleep(.2)
     
     def GetMACAddress(self):
-        return mac
+        return ubinascii.hexlify(network.WLAN().config('mac'),':').decode()
     
     def GetIPAddress(self):
+        global wlan
         return wlan.ifconfig()[0]
     
     def IsWifiConnected(self):
+        global wlan
         if wlan.status() == 3:
             return "W"
         else:
