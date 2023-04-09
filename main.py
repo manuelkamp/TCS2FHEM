@@ -8,13 +8,14 @@ import uasyncio as asyncio
 import utime as time
 import Keypad
 import usocket as socket
+import urequests as requests
 from machine import ADC, Pin
 
 from secrets import secrets
 from configs import configs
 
 rp2.country(configs['country'])
-version = "0.7-alpha"
+version = "0.9-beta"
 
 Oled = Oled.Oled()
 TimeUtils = TimeUtils.TimeUtils()
@@ -32,6 +33,15 @@ displayOff = False
 busline = ADC(28)
 triggerline = Pin(15, Pin.OUT)
 writerActive = False
+
+# Checks if string is integer
+def IsInt(possibleint):
+    try:
+        int(possibleint)
+    except:
+            return False
+    else:
+            return True
 
 # Reboots the Pico W (f.e. in case of an error)
 def Reboot():
@@ -78,7 +88,7 @@ def BuildScreen():
         elif (subscreen == 1):
             ShowText("Eingangstuer", "getriggert", "            Ext")
         elif (subscreen == 2):
-            ShowText("Licht im Gang", "getriggert", "            Ext")
+            ShowText("Licht am Gang", "getriggert", "            Ext")
         elif (subscreen == 3):
             ShowText("Party-Mode", ("aktiviert" if partyMode else "deaktiviert"), "            Ext")
         elif (subscreen == 4):
@@ -121,9 +131,11 @@ def TogglePartyMode():
     global subscreen, partyMode
     if (partyMode):
         partyMode = False
+        ExternalAPI("partymode" + PartyModeState())
         Logger.LogMessage("Party-Mode off")
     else:
         partyMode = True
+        ExternalAPI("partymode" + PartyModeState())
         Logger.LogMessage("Party-Mode on")
     subscreen = 3
 
@@ -131,6 +143,7 @@ def TogglePartyMode():
 def SetPartyMode(newValue):
     global partyMode
     partyMode = newValue
+    ExternalAPI("partymode" + PartyModeState())
     Logger.LogMessage("Setting Party-Mode via API to " + PartyModeState())
 
 # Returns status of party-mode
@@ -155,11 +168,10 @@ def PartyModeActive():
 def set_global_exception():
     def handle_exception(loop, context):
         Logger.LogMessage("Fatal error: " + str(context["exception"]))
-        #todo bei prod-version folgende Zeilen einkommentieren
         import sys
         sys.print_exception(context["exception"])
         sys.exit()
-        #Reboot()
+        Reboot()
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
@@ -238,7 +250,7 @@ async def APIHandling(reader, writer):
     else:
         req = request.split('/')
         stateis = ""
-        if (len(req) == 3 or len(req) == 4):
+        if (len(req) == 3 or len(req) == 4 or len(req) == 5):
             if (req[1] == secrets['api']):
                 if (req[2] == "triggerdoor"):
                     Logger.LogMessage("Triggering Door")
@@ -273,12 +285,18 @@ async def APIHandling(reader, writer):
                     stateis = "Ringing front doorbell"
                     await TCSBusWriter(configs['frontdoor_ringing_message'])
                 elif (req[2] == "logs"):
-                    stateis = Logger.LastLogs()
+                    if (len(req) >= 4 and req[3] != "json"):
+                        if (IsInt(req[3])):
+                            stateis = Logger.LastLogs(int(req[3]))
+                        else:
+                            stateis = "<b>Error:</b> Parameter for log length not an integer!"
+                    else:
+                        stateis = Logger.LastLogs(50)
                 else:
                     stateis = "<b>Error:</b> Unknown command!"
             else:
                 stateis = "<b>Error:</b> API key is invalid!"
-            if (len(req) == 4 and req[3] == "json"):
+            if ((len(req) == 4 and req[3] == "json") or (len(req) == 5 and req[4] == "json")):
                 response = json % stateis
                 writer.write('HTTP/1.0 200 OK\r\nContent-type: text/json\r\n\r\n')
             else:
@@ -307,7 +325,7 @@ async def TCSBusReader():
         if not writerActive:
             busValue = busline.read_u16()
             val = 1
-            if (busValue >= 50000): #voltage on TCS:Bus 0...65535
+            if (busValue >= 30000): #voltage on TCS:Bus 0...65535
                 val = 1
             else:
                 val = 0
@@ -315,32 +333,44 @@ async def TCSBusReader():
             dauer = microsSeitLetzterFlanke()
             if (dauer > 10000) and (message): #handle recieved message, and reset message
                 message.pop(0) #remove first timing, because we do not need it
-                for i in range(len(message)): #encode message
-                    message[i] = int(((round(message[i] / 1000.0) * 1000.0) / 2000) - 1)
+                for i in range(len(message)): #encode bus message (lazy, because the TCS:Bus is not as precise as we are ;) )
+                    if (message[i] >= 1000 and message[i] <= 2999):
+                        message[i] = 0
+                    elif (message[i] >= 3000 and message[i] <= 4999):
+                        message[i] = 1
+                    elif (message[i] >= 5000 and message[i] <= 6999):
+                        message[i] = 2
+                    elif (message[i] >= 7000): #this may be an invalid message bit, but for not having numbers like '7543', we encode all this to '3'
+                        message[i] = 3
                 if (message == configs['light_trigger_message']):
                     if (configs['log_incoming_bus_messages']):
                         Logger.LogMessage("Incoming TCS:Bus message for triggering light: " + str(message))
                     #nothing else to do
+                    pass
                 elif (message == configs['door_trigger_message']):
                     if (configs['log_incoming_bus_messages']):
                         Logger.LogMessage("Incoming TCS:Bus message for door trigger: " + str(message))
                     #nothing else to do
+                    pass
+                elif (message == configs['tcs_message']):
+                    if (configs['log_incoming_bus_messages']):
+                        Logger.LogMessage("Incoming TCS:Bus message from device: " + str(message))
+                    #nothing else to do
+                    pass
                 elif (message == configs['door_ringing_message']):
                     if (configs['log_incoming_bus_messages']):
                         Logger.LogMessage("Incoming TCS:Bus message for door ringing: " + str(message))
-                    print ("türklingel")
-                    #todo trigger external api
+                    await ExternalAPI("doorbell")
                 elif (message == configs['frontdoor_ringing_message']):
                     if (configs['log_incoming_bus_messages']):
                         Logger.LogMessage("Incoming TCS:Bus message for frontdoor ringing: " + str(message))
                     if (partyMode):
-                        time.sleep(0.5)
+                        asyncio.sleep(1)
                         Logger.LogMessage("Triggering Door and Light for Party-Mode")
                         await TCSBusWriter(configs['door_trigger_message'])
-                        time.sleep(1)
+                        asyncio.sleep(1)
                         await TCSBusWriter(configs['light_trigger_message'])
-                    print ("haustürklingel")
-                    #todo trigger external api
+                    await ExternalAPI("frontdoorbell")
                 else:
                     if (configs['log_incoming_bus_messages']):
                         Logger.LogMessage("Unknown TCS:Bus message: " + str(message))
@@ -378,13 +408,34 @@ async def TCSBusWriter(message):
         triggerline.off()
         writerActive = False
 
+# Main method for external API (=FHEM)
+async def ExternalAPI(action):
+    Logger.LogMessage("External API action: " + action)
+    if (action == "doorbell"):
+        if (configs['fhem_door_ringed'] is not ""):
+            response = requests.get(configs['fhem_door_ringed'])
+            response.close()
+        else:
+            Logger.LogMessage("Warning: No fhem_door_ringed setting!")
+    elif (action == "frontdoorbell"):
+        if (configs['fhem_frontdoor_ringed'] is not ""):
+            response = requests.get(configs['fhem_frontdoor_ringed'])
+            response.close()
+        else:
+            Logger.LogMessage("Warning: No fhem_frontdoor_ringed setting!")
+    else:
+        Logger.LogMessage("Error: Unknown ExternalAPI action!")
+    pass
+
 # Main method for daily housekeeping
 async def Housekeeper():
     Logger.LogMessage("Housekeeper started")
     while True:
         Logger.LogMessage("Housekeeper is performing actions")
         Logger.Housekeeping()
-        #todo also do a ntp sync
+        Logger.LogMessage("Housekeeper is performing NTP sync")
+        NTP.SetRTCTimeFromNTP(configs['ntp_host'], configs['gmt_offset'], configs['auto_summertime'])
+        Logger.LogMessage("Housekeeper has finished its jobs")
         await asyncio.sleep(86400)
 
 # Main entry point after booting
@@ -412,10 +463,13 @@ def Boot():
     if (Networking.Status()):
         ShowText("Booting [1/3]", "Conn. Wifi: IP", Networking.GetIPAddress())
         ShowText("Booting [2/3]", "NTP time:", configs['ntp_host'])
-        NTP.SetRTCTimeFromNTP(configs['ntp_host'], configs['gmt_offset'], configs['auto_summertime'])
+        if (NTP.SetRTCTimeFromNTP(configs['ntp_host'], configs['gmt_offset'], configs['auto_summertime'])):
+            Logger.DisableTempLogfile()
         ShowText("Booting [2/3]", "NTP time:", TimeUtils.DateTimeNow())
     else:
         ShowText("Booting [1/3]", "Conn. Wifi:", "ERROR!")
+        time.sleep(3)
+        Reboot()
 
 #####################################################################
         
