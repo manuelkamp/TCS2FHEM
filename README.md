@@ -28,7 +28,10 @@ frontdoor_ringing_message: The TCS:Bus message if someone rings the front door (
 door_ringing_message: The TCS:Bus message if someone rings the door (list)  
 door_trigger_message: The TCS:Bus message to trigger the front door opener (list)  
 light_trigger_message: The TCS:Bus message to trigger the light (list)  
+tcs_message: The TCS:Bus message sent every 37 minutes from the TCS:Bus device to check devices - no action, just for filtering (list)  
 api_client_ip: Only this IP is allowed to use the API. Leave blank to allow all connections from all IPs (string)  
+fhem_door_ringed: URL of FHEM command, when the door is ringed (string)  
+fhem_frontdoor_ringed: URL of FHEM command, when the front door is ringed (string)  
 
 In the file secrets.py set your configurations:  
 ssid: Wifi name (string)  
@@ -88,7 +91,72 @@ ringdoor - Sends "ring doorbell" message to TCS:Bus
 ringfrontdoor - Sends "ring front doorbell" message to TCS:Bus  
 
 ## FHEM API  
-Not implemented yet. Until I implement it, you can use HTTPMOD to control the TCS2FHEM device from FHEM, using the above API commands.
+
+With the FHEM API you interconnect your FHEM instance with your TCS2FHEM device. It allows you for example control the door trigger via FHEM, or handle incoming TCS:Bus messages within FHEM to send you a notification or anything else. In this example configuration, we set up a HTTPMOD device in FHEM to control your TCS2FHEM device within FHEM, using the above explained API commands.  
+
+### Example Setup of FHEMWEB
+
+You need to give your TCS2FHEM device a static IP address within your network. Then you need to create a new FHEMWEB and configure it to work only with the static IP of your TCS2FHEM device without the csrfToken.  
+
+```
+define WEBapi FHEMWEB 8086 global
+attr WEBapi csrfToken none
+attr WEBapi allowfrom your-TCS2FHEM-static-IP|127.0.0.1
+```
+
+### Exampe of a HTTPMOD device in FHEM to control TCS2FHEM
+
+This device is used to trigger actions from FHEM via the TCS2FHEM API. In this Example you can trigger the dooropener, the light and the builtin partymode of the TCS2FHEM device.  
+
+```
+define TCS2FHEM HTTPMOD 0
+setuuid TCS2FHEM 63b875f4-f33f-1b7d-61d3-9101ee190fa5bae1
+attr TCS2FHEM icon Todoist
+attr TCS2FHEM room TCS
+attr TCS2FHEM set01Name triggerDoor
+attr TCS2FHEM set01NoArg 1
+attr TCS2FHEM set01URL http://servername/api_key/triggerdoor
+attr TCS2FHEM set02Name triggerLight
+attr TCS2FHEM set02NoArg 1
+attr TCS2FHEM set02URL http://servername/api_key/triggerlight
+attr TCS2FHEM set03Name togglePartyMode
+attr TCS2FHEM set03NoArg 1
+attr TCS2FHEM set03URL http://servername/api_key/togglepartymode
+attr TCS2FHEM webCmd triggerDoor:triggerLight:togglePartyMode
+```
+
+### Example of Notify and Dummy device in FHEM to send a message to your smartphone
+
+This dummy device is used to represent the state. The state 'idle' means, there is no action. The state 'ringed' is set if someone rings your doorbell and the TCS2FHEM device sets it. The notify device in FHEM is used to see the change from idle to ringed, and you can perform your wanted action in FHEM.  
+
+```
+define TCS_Door dummy
+setuuid TCS_Door 63a1c02e-f33f-1b7d-29b2-21917943a9d12101
+attr TCS_Door room TCS
+attr TCS_Door setList idle ringed
+```
+
+```
+define n_TCS_Door notify TCS_Door:ringed set Talk msg Jemand hat an der Wohnungstür angeläutet;; set TCS_Door idle
+setuuid n_TCS_Door 63a1c0c2-f33f-1b7d-fe89-1e89dde293580eb1
+attr n_TCS_Door disabledAfterTrigger 10
+attr n_TCS_Door room TCS
+```
+
+For this devices, the FHEM API Url that you need to use in TCS2FHEM setting 'fhem_door_ringed' would be:  
+```
+http://fhem-server:8086/fhem?cmd=set%20TCS_Door%20ringed&XHR=1
+```
+
+This works exactly the same for the TCS2FHEM settings 'fhem_frontdoor_ringed'.
+
+### Example of Notify and Dummy device in FHEM for Partymode
+
+If you decide to not use the builtin Partymode in your TCS2FHEM device, you can set up a Partymode in FHEM. This may be useful, if you want to trigger more actions as it would be possible with just the TCS2FHEM device.  
+
+```
+coming soon...
+``` 
 
 ## Legal remarks
 I am not affiliated to TCSAG and/or any of their brands and/or trademarks, nor do I have any business information on the proprietary TCS:Bus. I just reverse engineered it, to include my intercom system into my home automation and shared my research here. All Rights to the possible Trademark TCS:Bus and all things connected, remain untouched by this open source project.
